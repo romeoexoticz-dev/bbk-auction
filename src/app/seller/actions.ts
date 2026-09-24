@@ -162,6 +162,13 @@ export async function createAuctionDraft(
       .upload(objectPath, bytes, { contentType: image.type, upsert: false });
 
     if (uploadError) {
+      console.error("Unable to upload auction media", {
+        auctionId: row.id,
+        position,
+        kind,
+        code: uploadError.name,
+        message: uploadError.message,
+      });
       mediaWarning = "บันทึกฉบับร่างแล้ว แต่มีรูปบางรูปอัปโหลดไม่สำเร็จ";
       break;
     }
@@ -179,6 +186,13 @@ export async function createAuctionDraft(
     });
 
     if (metadataError) {
+      console.error("Unable to register auction media", {
+        auctionId: row.id,
+        position,
+        kind,
+        code: metadataError.code,
+        message: metadataError.message,
+      });
       await supabase.storage.from("auction-media").remove([objectPath]);
       uploadedPaths.pop();
       mediaWarning = "บันทึกฉบับร่างแล้ว แต่มีรูปบางรูปบันทึกไม่สำเร็จ";
