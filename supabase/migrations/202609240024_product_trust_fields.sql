@@ -28,7 +28,11 @@ alter table public.auction_media
 
 alter table public.auction_media
   add constraint auction_media_media_kind_check
-  check (media_kind in ('cover', 'front', 'back', 'gallery', 'defect', 'evidence'));
+  check (
+    media_kind = any (
+      array['cover', 'front', 'back', 'gallery', 'defect', 'evidence']::text[]
+    )
+  );
 
 create unique index if not exists auction_media_one_front_per_auction_idx
   on public.auction_media (auction_id)
@@ -204,7 +208,7 @@ create trigger enforce_auction_product_trust_before_publish
 before update of status on public.auctions
 for each row execute function public.enforce_auction_product_trust_before_publish();
 
-revoke all on function public.create_auction_draft_with_details(text, text, text, bigint, bigint, timestamptz, timestamptz, text, text, text, text, text) from public;
-revoke all on function public.update_auction_draft_with_details(uuid, text, text, text, bigint, bigint, timestamptz, timestamptz, text, text, text, text, text) from public;
+revoke all on function public.create_auction_draft_with_details(text, text, text, bigint, bigint, timestamptz, timestamptz, text, text, text, text, text) from public, anon;
+revoke all on function public.update_auction_draft_with_details(uuid, text, text, text, bigint, bigint, timestamptz, timestamptz, text, text, text, text, text) from public, anon;
 grant execute on function public.create_auction_draft_with_details(text, text, text, bigint, bigint, timestamptz, timestamptz, text, text, text, text, text) to authenticated;
 grant execute on function public.update_auction_draft_with_details(uuid, text, text, text, bigint, bigint, timestamptz, timestamptz, text, text, text, text, text) to authenticated;
