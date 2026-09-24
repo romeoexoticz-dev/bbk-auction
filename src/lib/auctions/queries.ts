@@ -46,6 +46,8 @@ export type AuctionOutcome = {
 
 const now = Date.now();
 export const auctionCategories = ["เหรียญกษาปณ์", "ธนบัตร", "พระเครื่อง", "การ์ดสะสม", "ของเก่า"] as const;
+const customerMarketplaceStatuses: AuctionView["status"][] = ["scheduled", "live"];
+const customerDetailStatuses: AuctionView["status"][] = ["scheduled", "live", "ended", "settled"];
 
 export type MarketplaceAuctionFilters = {
   query?: string;
@@ -152,7 +154,7 @@ export async function getFeaturedAuctions(filters: MarketplaceAuctionFilters = {
   let currentRequest = supabase
     .from("auctions")
     .select(trustSelection, { count: "exact" })
-    .in("status", ["scheduled", "live"])
+    .in("status", customerMarketplaceStatuses)
     .order("ends_at", { ascending: true });
   if (normalized.category) currentRequest = currentRequest.eq("category", normalized.category);
   if (normalized.query) currentRequest = currentRequest.or(`title.ilike.%${normalized.query}%,description.ilike.%${normalized.query}%`);
@@ -166,7 +168,7 @@ export async function getFeaturedAuctions(filters: MarketplaceAuctionFilters = {
   let legacyRequest = supabase
     .from("auctions")
     .select(selection, { count: "exact" })
-    .in("status", ["scheduled", "live"])
+    .in("status", customerMarketplaceStatuses)
     .order("ends_at", { ascending: true });
   if (normalized.category) legacyRequest = legacyRequest.eq("category", normalized.category);
   if (normalized.query) legacyRequest = legacyRequest.or(`title.ilike.%${normalized.query}%,description.ilike.%${normalized.query}%`);
@@ -188,9 +190,15 @@ export async function getAuctionById(id: string) {
     .from("auctions")
     .select(trustSelection)
     .eq("id", id)
+    .in("status", customerDetailStatuses)
     .single();
   if (!error && data) return mapAuction(data);
-  const legacy = await supabase.from("auctions").select(selection).eq("id", id).single();
+  const legacy = await supabase
+    .from("auctions")
+    .select(selection)
+    .eq("id", id)
+    .in("status", customerDetailStatuses)
+    .single();
   if (legacy.error || !legacy.data) return null;
   return mapAuction(legacy.data);
 }
