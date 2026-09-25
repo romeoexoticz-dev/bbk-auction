@@ -36,8 +36,8 @@ begin
     from public.bids bid
   ) participant on participant.auction_id = auction.id
   where auction.status = 'live'
-    and auction.ends_at > now()
-    and auction.ends_at <= now() + interval '15 minutes'
+    and auction.ends_at > clock_timestamp()
+    and auction.ends_at <= clock_timestamp() + interval '15 minutes'
   on conflict (dedupe_key) do nothing;
 
   get diagnostics v_inserted = row_count;
@@ -51,13 +51,16 @@ select cron.schedule(
   'bbk-auction-ending-reminders',
   '* * * * *',
   'select public.send_auction_ending_reminders();'
+)
+where not exists (
+  select 1 from cron.job where jobname = 'bbk-auction-ending-reminders'
 );
 
 -- Catch auctions already inside the reminder window at installation time.
 select public.send_auction_ending_reminders();
 
 insert into public.audit_events (actor_id, event_type, entity_type, entity_id, payload)
-values (
+select
   null,
   'notifications.auction_ending_reminders_installed',
   'system',
@@ -68,6 +71,14 @@ values (
     'delivery', 'in_app',
     'recipients', 'participating_bidders',
     'dedupe', 'once_per_auction_per_bidder',
-    'time_source', 'database'
+    'time_source', 'database_clock_timestamp',
+    'approved_by', 'คุณตาล',
+    'approved_on', '2026-09-25'
   )
+where not exists (
+  select 1
+  from public.audit_events
+  where event_type = 'notifications.auction_ending_reminders_installed'
+    and entity_type = 'system'
+    and entity_id = 'bbk-auction-ending-reminders'
 );
