@@ -137,7 +137,7 @@ export default async function SellerDashboard({
         <div><span className="dash-kicker">หลังบ้านร้าน BBK</span><h1>จัดการสินค้าในหน้าเดียว</h1><p>สร้างฉบับร่าง ตรวจข้อมูล แล้วตั้งเวลาเปิดประมูลได้ทันทีโดยไม่ต้องส่งอนุมัติซ้ำ</p></div>
         <Link className="button button-gold" href="/seller#new">＋ สร้างรายการ</Link>
       </section>
-      <div className="notice-card"><span>i</span><div><strong>ฉบับร่างยังไม่แสดงต่อลูกค้า</strong><p>รายการจะขึ้นหน้าตลาดเมื่อกด “ตั้งเวลา/เปิดประมูล” เท่านั้น ระบบเงินจริงยังปิดอยู่</p></div></div>
+      <div className="notice-card"><span>i</span><div><strong>ฉบับร่างยังไม่แสดงต่อลูกค้า</strong><p>รายการจะขึ้นหน้าตลาดเมื่อกด “ตั้งเวลา/เปิดประมูล” เท่านั้น · bid ใน 2 นาทีสุดท้ายจะต่อเวลาอีก 2 นาที · ระบบเงินจริงยังปิดอยู่</p></div></div>
       {published && <div className="seller-page-message success"><strong>ตั้งเวลาเปิดประมูลแล้ว</strong><p>ถ้าถึงเวลาเริ่ม ระบบจะเปิดทันที หากยังไม่ถึงเวลาจะเปิดให้อัตโนมัติ</p></div>}
       {publishError && <div className="seller-page-message error"><strong>ยังเปิดรายการไม่ได้</strong><p>{windowEnded ? "เวลาปิดผ่านไปแล้ว กรุณาแก้วันเริ่มและวันปิดก่อน" : params.error === "trust-fields" ? "กรุณาแก้รายการและกรอกปี รุ่น ขนาด สภาพ และหมายเหตุจากผู้เชี่ยวชาญให้ครบ" : params.error === "trust-media" ? "รายการต้องมีรูปด้านหน้า ด้านหลัง และตำหนิสำคัญก่อนเปิดประมูล" : "กรุณาตรวจข้อมูล วันที่ และสิทธิ์บัญชี แล้วลองใหม่"}</p></div>}
       <section className="metric-grid">

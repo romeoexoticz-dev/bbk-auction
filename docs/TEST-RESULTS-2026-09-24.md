@@ -41,6 +41,9 @@
 | หน้ารายละเอียดรายการตั้งเวลา | ผ่าน — แสดงรูปครบ 3 มุม ราคา 1,000 บาท และข้อความรอเวลาเปิดประมูล |
 | ระบบเงินจริงหลังเผยแพร่ทดสอบ | ผ่าน — ยังเป็น `payment_submission_enabled=false` |
 | ล้างข้อมูลทดสอบ E2E | ผ่าน — auction, media metadata, Storage object, audit และ notification เหลือ 0; รายการจริงในหลังบ้านยังอยู่ 5 รายการ |
+| ต่อเวลาอัตโนมัติเมื่อ bid ใน 2 นาทีสุดท้าย | ผ่าน — เวลาปิดเพิ่มจากเดิม 2 นาทีและ bid ได้รับ `BID_ACCEPTED` |
+| bid ก่อนเข้าเขตต่อเวลา | ผ่าน — เวลาปิดไม่เปลี่ยน |
+| Audit การต่อเวลา | ผ่าน — สร้าง `auction.deadline_extended` หนึ่งรายการ และข้อมูลทดสอบถูก rollback |
 
 ชุดคำสั่งที่ใช้ทดสอบอยู่ที่
 `supabase/tests/manual/20260924_verify_bid_idempotency_and_finalization_rollback.sql`
@@ -64,6 +67,7 @@
 - เพิ่ม server log แบบไม่บันทึก path หรือข้อมูลลูกค้า เพื่อให้หาสาเหตุการอัปโหลดรูปและ metadata ล้มเหลวได้เร็วขึ้น
 - พบ deadlock เมื่อผู้ประมูลต่างบัญชีเพิ่ม `bid_attempts` แล้วพยายามล็อก auction เดียวกันด้วย `FOR UPDATE`; Foreign Key ถือ `KEY SHARE` คนละ transaction ทำให้ล็อกไขว้กัน
 - ติดตั้ง migration `202609240028_fix_concurrent_bid_deadlock.sql` แล้ว โดยใช้ `FOR NO KEY UPDATE` เพื่อยัง serialize ราคาต่อ auction แต่ไม่ชนกับ Foreign Key `KEY SHARE`; ทดสอบซ้ำจาก 2 การเชื่อมต่อแล้วผ่าน
+- ติดตั้ง migration `202609250029_automatic_bid_extension.sql` แล้วในวันที่ 25 กันยายน 2026: รายการใหม่และรายการที่ยังไม่ Live ใช้กติกา 2 นาที + 2 นาที ส่วนรายการที่ Live อยู่ไม่ถูกเปลี่ยนกติกากลางคัน
 
 ## ยังไม่ได้ทดสอบ
 

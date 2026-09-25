@@ -15,6 +15,8 @@ export type AuctionView = {
   bidCount: number;
   startsAt: string;
   endsAt: string;
+  extensionWindowSeconds: number;
+  extensionDurationSeconds: number;
   version: number;
   icon: string;
   tone: string;
@@ -72,10 +74,10 @@ function normalizedMarketplaceFilters(filters: MarketplaceAuctionFilters) {
 }
 
 export const demoAuctions: AuctionView[] = [
-  { id: "demo-coin-001", category: "เหรียญกษาปณ์", icon: "๑", title: "เหรียญรัชกาลที่ 5 เนื้อเงิน", description: "รายการตัวอย่างสำหรับทดสอบหน้าจอ กรุณาตรวจภาพด้านหน้า ด้านหลัง ตำหนิ น้ำหนัก และหลักฐานแหล่งที่มาก่อนประมูลจริง", evidenceNote: "ผ่านการตรวจข้อมูลเบื้องต้น", itemYear: "รัชกาลที่ 5", itemModel: "หนึ่งบาท เนื้อเงิน", itemSize: "โปรดตรวจข้อมูลสินค้าจริง", conditionSummary: "รายการตัวอย่าง", expertNotes: "ต้องตรวจสินค้าจริงก่อนเผยแพร่", openingPrice: 1000000, currentPrice: 1250000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 18, status: "live", startsAt: new Date(now - 3_600_000).toISOString(), endsAt: new Date(now + 6_133_000).toISOString(), version: 18, tone: "coin" },
-  { id: "demo-note-009", category: "ธนบัตร", icon: "฿", title: "ธนบัตรแบบ 9 เลขสวย", description: "รายการตัวอย่างพร้อมตำแหน่งสำหรับภาพหน้า–หลัง หมายเลข ลายน้ำ ลายเซ็น และตำหนิที่มองเห็นได้", evidenceNote: "มีภาพหน้า–หลังและตำหนิ", itemYear: "แบบ 9", itemModel: "เลขสวย", itemSize: "ขนาดมาตรฐาน", conditionSummary: "รายการตัวอย่าง", expertNotes: "ตรวจหมายเลข ลายน้ำ และลายเซ็นจากภาพจริง", openingPrice: 500000, currentPrice: 820000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 11, status: "live", startsAt: new Date(now - 3_600_000).toISOString(), endsAt: new Date(now + 11_744_000).toISOString(), version: 11, tone: "note" },
-  { id: "demo-amulet-014", category: "พระเครื่อง", icon: "◈", title: "พระสมเด็จ พร้อมบัตรรับรอง", description: "รายการตัวอย่างเท่านั้น บัตรรับรองและข้อมูลความแท้ต้องตรวจจากเอกสารต้นฉบับและผู้เชี่ยวชาญก่อนเผยแพร่จริง", evidenceNote: "รอตรวจเอกสารฉบับจริง", itemYear: "ไม่ระบุ", itemModel: "พระสมเด็จ", itemSize: "โปรดตรวจข้อมูลสินค้าจริง", conditionSummary: "รายการตัวอย่าง", expertNotes: "บัตรและสินค้าต้องตรวจจากต้นฉบับ", openingPrice: 1800000, currentPrice: 2400000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 26, status: "live", startsAt: new Date(now - 7_200_000).toISOString(), endsAt: new Date(now + 18_489_000).toISOString(), version: 26, tone: "amulet" },
-  { id: "demo-card-021", category: "การ์ดสะสม", icon: "◆", title: "การ์ดเกมเกรด 10 รุ่นแรก", description: "รายการตัวอย่างสำหรับแสดงข้อมูลกล่องเกรด หมายเลขรับรอง สภาพขอบ มุม ผิวหน้า และประวัติการครอบครอง", evidenceNote: "ซีลกล่องและหมายเลขชัดเจน", itemYear: "รุ่นแรก", itemModel: "เกรด 10", itemSize: "อยู่ในกล่องเกรด", conditionSummary: "รายการตัวอย่าง", expertNotes: "ตรวจซีลและหมายเลขกับผู้ให้บริการเกรด", openingPrice: 400000, currentPrice: 670000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 9, status: "live", startsAt: new Date(now - 1_800_000).toISOString(), endsAt: new Date(now + 30_981_000).toISOString(), version: 9, tone: "card" },
+  { id: "demo-coin-001", category: "เหรียญกษาปณ์", icon: "๑", title: "เหรียญรัชกาลที่ 5 เนื้อเงิน", description: "รายการตัวอย่างสำหรับทดสอบหน้าจอ กรุณาตรวจภาพด้านหน้า ด้านหลัง ตำหนิ น้ำหนัก และหลักฐานแหล่งที่มาก่อนประมูลจริง", evidenceNote: "ผ่านการตรวจข้อมูลเบื้องต้น", itemYear: "รัชกาลที่ 5", itemModel: "หนึ่งบาท เนื้อเงิน", itemSize: "โปรดตรวจข้อมูลสินค้าจริง", conditionSummary: "รายการตัวอย่าง", expertNotes: "ต้องตรวจสินค้าจริงก่อนเผยแพร่", openingPrice: 1000000, currentPrice: 1250000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 18, status: "live", startsAt: new Date(now - 3_600_000).toISOString(), endsAt: new Date(now + 6_133_000).toISOString(), extensionWindowSeconds: 120, extensionDurationSeconds: 120, version: 18, tone: "coin" },
+  { id: "demo-note-009", category: "ธนบัตร", icon: "฿", title: "ธนบัตรแบบ 9 เลขสวย", description: "รายการตัวอย่างพร้อมตำแหน่งสำหรับภาพหน้า–หลัง หมายเลข ลายน้ำ ลายเซ็น และตำหนิที่มองเห็นได้", evidenceNote: "มีภาพหน้า–หลังและตำหนิ", itemYear: "แบบ 9", itemModel: "เลขสวย", itemSize: "ขนาดมาตรฐาน", conditionSummary: "รายการตัวอย่าง", expertNotes: "ตรวจหมายเลข ลายน้ำ และลายเซ็นจากภาพจริง", openingPrice: 500000, currentPrice: 820000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 11, status: "live", startsAt: new Date(now - 3_600_000).toISOString(), endsAt: new Date(now + 11_744_000).toISOString(), extensionWindowSeconds: 120, extensionDurationSeconds: 120, version: 11, tone: "note" },
+  { id: "demo-amulet-014", category: "พระเครื่อง", icon: "◈", title: "พระสมเด็จ พร้อมบัตรรับรอง", description: "รายการตัวอย่างเท่านั้น บัตรรับรองและข้อมูลความแท้ต้องตรวจจากเอกสารต้นฉบับและผู้เชี่ยวชาญก่อนเผยแพร่จริง", evidenceNote: "รอตรวจเอกสารฉบับจริง", itemYear: "ไม่ระบุ", itemModel: "พระสมเด็จ", itemSize: "โปรดตรวจข้อมูลสินค้าจริง", conditionSummary: "รายการตัวอย่าง", expertNotes: "บัตรและสินค้าต้องตรวจจากต้นฉบับ", openingPrice: 1800000, currentPrice: 2400000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 26, status: "live", startsAt: new Date(now - 7_200_000).toISOString(), endsAt: new Date(now + 18_489_000).toISOString(), extensionWindowSeconds: 120, extensionDurationSeconds: 120, version: 26, tone: "amulet" },
+  { id: "demo-card-021", category: "การ์ดสะสม", icon: "◆", title: "การ์ดเกมเกรด 10 รุ่นแรก", description: "รายการตัวอย่างสำหรับแสดงข้อมูลกล่องเกรด หมายเลขรับรอง สภาพขอบ มุม ผิวหน้า และประวัติการครอบครอง", evidenceNote: "ซีลกล่องและหมายเลขชัดเจน", itemYear: "รุ่นแรก", itemModel: "เกรด 10", itemSize: "อยู่ในกล่องเกรด", conditionSummary: "รายการตัวอย่าง", expertNotes: "ตรวจซีลและหมายเลขกับผู้ให้บริการเกรด", openingPrice: 400000, currentPrice: 670000, minIncrement: 10000, buyerFeeRateBps: 1000, buyerFeeVatRateBps: 700, bidCount: 9, status: "live", startsAt: new Date(now - 1_800_000).toISOString(), endsAt: new Date(now + 30_981_000).toISOString(), extensionWindowSeconds: 120, extensionDurationSeconds: 120, version: 9, tone: "card" },
 ];
 
 function displayForCategory(category: string) {
@@ -102,6 +104,8 @@ function mapAuction(row: Record<string, unknown>): AuctionView {
     bidCount: Number(row.bid_count),
     startsAt: String(row.starts_at),
     endsAt: String(row.ends_at),
+    extensionWindowSeconds: Number(row.extension_window_seconds ?? 0),
+    extensionDurationSeconds: Number(row.extension_duration_seconds ?? 0),
     version: Number(row.version),
     evidenceNote: "ข้อมูลจากฐานข้อมูลกลาง",
     itemYear: String(row.item_year ?? "ยังไม่ระบุ"),
@@ -113,7 +117,7 @@ function mapAuction(row: Record<string, unknown>): AuctionView {
   };
 }
 
-const selection = "id,title,description,category,status,opening_price,current_price,min_increment,buyer_fee_rate_bps,buyer_fee_vat_rate_bps,bid_count,starts_at,ends_at,version";
+const selection = "id,title,description,category,status,opening_price,current_price,min_increment,buyer_fee_rate_bps,buyer_fee_vat_rate_bps,bid_count,starts_at,ends_at,extension_window_seconds,extension_duration_seconds,version";
 const trustSelection = `${selection},item_year,item_model,item_size,condition_summary,expert_notes`;
 
 async function reconcileAuctionLifecycle() {

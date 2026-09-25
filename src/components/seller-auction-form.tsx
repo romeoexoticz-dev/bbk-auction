@@ -66,6 +66,7 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
             <input defaultValue={editAuction?.openingPrice} inputMode="decimal" min="0.01" name="openingPrice" placeholder="1000" required step="0.01" type="number" />
           </label>
           <div className="form-info"><strong>เพิ่มราคาอัตโนมัติ</strong><br />ต่ำกว่า ฿1,000 เพิ่ม ฿10 · ฿1,000–4,999 เพิ่ม ฿50 · ตั้งแต่ ฿5,000 เพิ่ม ฿100</div>
+          <div className="form-info"><strong>ต่อเวลาอัตโนมัติ</strong><br />มี bid ใน 2 นาทีสุดท้าย ระบบต่อเวลาอีก 2 นาที และทำซ้ำได้</div>
           <label>วันเริ่มที่เสนอ
             <input defaultValue={editAuction?.startsAt ?? localDateTime(1, 10)} name="startsAt" required type="datetime-local" />
           </label>
