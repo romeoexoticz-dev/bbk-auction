@@ -5,7 +5,7 @@ import { Brand } from "@/components/brand";
 import { AuctionCountdown } from "@/components/auction-countdown";
 import { AuctionLiveRefresh } from "@/components/auction-live-refresh";
 import { BidForm } from "@/components/bid-form";
-import { formatBaht, getAuctionById, getAuctionMedia, getAuctionOutcome } from "@/lib/auctions/queries";
+import { formatBaht, getAuctionById, getAuctionMedia, getAuctionOutcome, getPublicBidHistory } from "@/lib/auctions/queries";
 import { getCurrentBidderVerification } from "@/lib/identity/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -13,7 +13,10 @@ export default async function AuctionDetailPage({ params }: PageProps<"/auctions
   const { id } = await params;
   const auction = await getAuctionById(id);
   if (!auction) notFound();
-  const media = await getAuctionMedia(auction.id);
+  const [media, bidHistory] = await Promise.all([
+    getAuctionMedia(auction.id),
+    getPublicBidHistory(auction.id),
+  ]);
   const primaryImage = media.find((item) => item.kind === "front") ?? media.find((item) => item.kind === "cover") ?? media[0];
   const outcome = auction.status === "ended" || auction.status === "settled"
     ? await getAuctionOutcome(auction.id)
@@ -30,6 +33,11 @@ export default async function AuctionDetailPage({ params }: PageProps<"/auctions
     timeStyle: "short",
     timeZone: "Asia/Bangkok",
   }).format(new Date(auction.startsAt));
+  const bidDateTime = new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "medium",
+    timeStyle: "medium",
+    timeZone: "Asia/Bangkok",
+  });
 
   return (
     <div className="auction-detail-page">
@@ -60,6 +68,19 @@ export default async function AuctionDetailPage({ params }: PageProps<"/auctions
           {!configured && <div className="demo-bid-note"><strong>โหมดตัวอย่าง</strong><p>เมื่อใส่ค่า Supabase และรัน migration แล้ว แบบฟอร์มนี้จะเรียก `place_bid` RPC ผ่าน Server Action</p></div>}
           <div className="bid-rules"><h2>ก่อนวางประมูล</h2><ul><li>ตรวจรูป สภาพ ตำหนิ และรายละเอียดสินค้าให้ครบ</li><li>สินค้าในระบบเป็นสินค้าที่ร้าน BBK คัดเลือกและนำลงเอง</li><li>ราคาและเวลาที่ยอมรับยึดฐานข้อมูลเป็นหลัก</li></ul></div>
           {auction.extensionWindowSeconds > 0 && auction.extensionDurationSeconds > 0 && <div className="demo-bid-note"><strong>กติกาต่อเวลาอัตโนมัติ</strong><p>ถ้ามีผู้เสนอราคาใน {auction.extensionWindowSeconds / 60} นาทีสุดท้าย ระบบจะต่อเวลาให้อีก {auction.extensionDurationSeconds / 60} นาที และทำซ้ำจนไม่มีราคาใหม่ในช่วงท้าย</p></div>}
+        </section>
+        <section className="auction-bid-history" aria-labelledby="bid-history-title">
+          <div className="auction-bid-history-heading">
+            <div><span className="section-label">ตรวจสอบย้อนหลังได้</span><h2 id="bid-history-title">ประวัติการเสนอราคา</h2></div>
+            <strong>{auction.bidCount} ครั้ง</strong>
+          </div>
+          {bidHistory.length > 0 ? <ol className="auction-bid-history-list">
+            {bidHistory.map((bid) => <li key={bid.sequence}>
+              <div><strong>{bid.isCurrentUser ? "คุณ" : bid.bidderAlias}</strong><time dateTime={bid.createdAt}>{bidDateTime.format(new Date(bid.createdAt))}</time></div>
+              <b>{formatBaht(bid.amount)}</b>
+            </li>)}
+          </ol> : <div className="auction-bid-history-empty"><strong>ยังไม่มีผู้เสนอราคา</strong><p>เมื่อมีราคาที่ระบบยอมรับ ประวัติจะปรากฏที่นี่โดยซ่อนข้อมูลส่วนตัวของผู้ประมูล</p></div>}
+          <p className="auction-bid-history-privacy">ระบบใช้ชื่อแทนเฉพาะในรายการนี้ และไม่เปิดเผยชื่อจริง อีเมล เบอร์โทร หรือรหัสบัญชี</p>
         </section>
       </main>
       {auction.status === "live" && verification?.status === "approved" && <a className="mobile-auction-cta" href="#bid-panel"><span>ขั้นต่ำ {minimumBaht} บาท</span><strong>เสนอราคา</strong></a>}

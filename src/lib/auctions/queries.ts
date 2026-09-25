@@ -46,6 +46,14 @@ export type AuctionOutcome = {
   totalAmount: number | null;
 };
 
+export type PublicBidHistoryEntry = {
+  sequence: number;
+  bidderAlias: string;
+  amount: number;
+  createdAt: string;
+  isCurrentUser: boolean;
+};
+
 const now = Date.now();
 export const auctionCategories = ["เหรียญกษาปณ์", "ธนบัตร", "พระเครื่อง", "การ์ดสะสม", "ของเก่า"] as const;
 const customerMarketplaceStatuses: AuctionView["status"][] = ["scheduled", "live"];
@@ -263,6 +271,26 @@ export async function getAuctionOutcome(auctionId: string): Promise<AuctionOutco
     orderNumber: order?.order_number ?? null,
     totalAmount: order?.total_amount === undefined ? null : Number(order.total_amount),
   };
+}
+
+export async function getPublicBidHistory(auctionId: string, limit = 30): Promise<PublicBidHistoryEntry[]> {
+  if (!isSupabaseConfigured() || !/^[0-9a-f-]{36}$/i.test(auctionId)) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_public_bid_history", {
+    p_auction_id: auctionId,
+    p_limit: Math.min(50, Math.max(1, limit)),
+  });
+  if (error) {
+    console.error("Unable to load public bid history", { code: error.code });
+    return [];
+  }
+  return (data ?? []).map((row: Record<string, unknown>) => ({
+    sequence: Number(row.bid_sequence),
+    bidderAlias: String(row.bidder_alias),
+    amount: Number(row.amount),
+    createdAt: String(row.created_at),
+    isCurrentUser: Boolean(row.is_current_user),
+  }));
 }
 
 export function formatBaht(satang: number) {
