@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { CustomerMobileNav } from "@/components/customer-mobile-nav";
+import { DatabaseClockProvider } from "@/components/database-clock-provider";
 import { MobileNotificationCenter, type MobileNotification } from "@/components/mobile-notification-center";
 import { getCurrentUser } from "@/lib/auth/authorization";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +12,22 @@ export default async function CustomerLayout({ children }: { children: ReactNode
   const user = await getCurrentUser();
   let notifications: MobileNotification[] = [];
   let pushDispatchEnabled = false;
+  const syncEnabled = isSupabaseConfigured();
+  let initialDatabaseNow = new Date().toISOString();
+  let initialClockSynced = false;
+  const supabase = syncEnabled ? await createClient() : null;
 
-  if (user) {
-    const supabase = await createClient();
+  if (supabase) {
+    const { data, error } = await supabase.rpc("get_database_time");
+    if (!error && typeof data === "string" && Number.isFinite(Date.parse(data))) {
+      initialDatabaseNow = data;
+      initialClockSynced = true;
+    } else if (error) {
+      console.error("Unable to load initial database clock", { code: error.code });
+    }
+  }
+
+  if (user && supabase) {
     const [notificationResult, pushResult] = await Promise.all([
       supabase
         .from("notifications")
@@ -28,5 +43,5 @@ export default async function CustomerLayout({ children }: { children: ReactNode
   }
 
   const notificationVersion = notifications.map((item) => `${item.id}:${item.read_at ?? "new"}`).join("|");
-  return <><div className="customer-mobile-shell">{children}</div><CustomerMobileNav signedIn={Boolean(user)} />{user && <MobileNotificationCenter initialNotifications={notifications} key={notificationVersion} pushDispatchEnabled={pushDispatchEnabled} userId={user.id} vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""} />}</>;
+  return <DatabaseClockProvider initialDatabaseNow={initialDatabaseNow} initialClockSynced={initialClockSynced} syncEnabled={syncEnabled}><div className="customer-mobile-shell">{children}</div><CustomerMobileNav signedIn={Boolean(user)} />{user && <MobileNotificationCenter initialNotifications={notifications} key={notificationVersion} pushDispatchEnabled={pushDispatchEnabled} userId={user.id} vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""} />}</DatabaseClockProvider>;
 }

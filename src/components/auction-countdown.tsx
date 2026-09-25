@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useDatabaseClock } from "@/components/database-clock-provider";
 
-function remaining(endsAt: string) {
-  const seconds = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
+function remaining(endsAt: string, databaseNow: number) {
+  const seconds = Math.max(0, Math.ceil((new Date(endsAt).getTime() - databaseNow) / 1000));
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
@@ -11,10 +12,13 @@ function remaining(endsAt: string) {
 }
 
 export function AuctionCountdown({ endsAt }: { endsAt: string }) {
-  const [label, setLabel] = useState(() => remaining(endsAt));
+  const { databaseNow, synced } = useDatabaseClock();
+  const [label, setLabel] = useState(() => remaining(endsAt, databaseNow()));
   useEffect(() => {
-    const timer = window.setInterval(() => setLabel(remaining(endsAt)), 1000);
+    const update = () => setLabel(remaining(endsAt, databaseNow()));
+    update();
+    const timer = window.setInterval(update, 1_000);
     return () => window.clearInterval(timer);
-  }, [endsAt]);
-  return <span>{label}</span>;
+  }, [databaseNow, endsAt]);
+  return <span data-clock-source={synced ? "database" : "fallback"}>{label}</span>;
 }
