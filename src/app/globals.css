@@ -638,6 +638,28 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
 .interest-actions p { color: #807b72; font-size: 8px; margin: 0; }
 .interest-success { background: #e5f1eb; border: 1px solid #c9dfd3; color: #2f6752; font-size: 9px; margin: 14px 0 0; padding: 11px 13px; }
 .bid-history-panel { margin: 20px auto 60px; max-width: 1224px; }
+.account-auction-overview { margin-top: 24px; }
+.account-auction-overview-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 14px; }
+.account-auction-overview-heading h2 { font-family: Georgia, serif; font-size: 25px; margin: 4px 0; }
+.account-auction-overview-heading p { color: #817b70; font-size: 12px; margin: 0; }
+.account-auction-columns { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.account-auction-column { border-top: 4px solid #9a7a3a; min-width: 0; overflow: hidden; }
+.account-auction-column.won { border-top-color: #39745c; }
+.account-auction-column.lost { border-top-color: #9b5a4b; }
+.account-auction-column .panel-heading { padding: 18px; }
+.account-auction-column .panel-heading h3 { font-size: 17px; margin: 0; }
+.account-auction-column .panel-heading p { font-size: 11px; }
+.account-auction-column .account-list-row { align-items: flex-start; padding: 15px 18px; }
+.account-auction-column .account-list-row > div:last-child { min-width: 94px; }
+.account-auction-column .account-list-row strong { font-size: 13px; }
+.account-auction-column .account-list-row small, .account-auction-column .account-list-row span { font-size: 11px; }
+.auction-position { border-radius: 999px; display: inline-flex !important; font-size: 10px !important; font-weight: 800; margin-top: 3px; padding: 4px 8px; }
+.auction-position.leading, .auction-position.won { background: #e2f0e8; color: #2f6e54; }
+.auction-position.outbid { background: #f4ead6; color: #7e5a1d; }
+.auction-position.lost { background: #f1e3df; color: #8b5044; }
+.account-auction-empty { min-height: 124px; padding: 24px 18px; }
+.account-auction-empty strong { font-size: 13px; }
+.account-auction-empty p { color: #817b72; font-size: 11px; line-height: 1.55; margin: 6px 0 0; }
 .account-list { display: flex; flex-direction: column; }
 .account-list-row { align-items: center; border-bottom: 1px solid #eeeae2; display: flex; gap: 18px; justify-content: space-between; padding: 15px 20px; }
 .account-list-row:last-child { border-bottom: 0; }
@@ -878,6 +900,7 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
   .auth-intro .brand { margin-bottom: 55px; }
   .auth-panel { padding-bottom: 80px; padding-top: 65px; }
   .auction-detail { grid-template-columns: 1fr; }
+  .account-auction-columns { grid-template-columns: 1fr; }
   .auction-gallery { border-bottom: 1px solid #d6d0c2; border-right: 0; }
   .detail-art { height: 560px; }
 }
