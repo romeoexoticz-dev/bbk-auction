@@ -753,40 +753,50 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
 .mobile-notifications { position: relative; z-index: 90; }
 .notification-fab { align-items: center; background: var(--ink); border: 1px solid #4b473d; border-radius: 50%; bottom: max(22px, env(safe-area-inset-bottom)); box-shadow: 0 16px 36px rgba(25, 22, 16, .28); color: white; cursor: pointer; display: flex; height: 58px; justify-content: center; position: fixed; right: 24px; width: 58px; z-index: 93; }
 .notification-fab svg { fill: none; height: 25px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 25px; }
-.notification-fab > span { align-items: center; background: #b93f35; border: 2px solid var(--paper); border-radius: 999px; display: flex; font-size: 9px; font-weight: 800; height: 22px; justify-content: center; min-width: 22px; padding: 0 5px; position: absolute; right: -4px; top: -5px; }
+.notification-fab > span { align-items: center; background: #c5392f; border: 2px solid var(--paper); border-radius: 999px; display: flex; font-size: 11px; font-weight: 800; height: 24px; justify-content: center; min-width: 24px; padding: 0 6px; position: absolute; right: -5px; top: -6px; }
+.notification-live-toast { align-items: center; animation: notification-toast-in .24s ease-out; background: #fff9ec; border: 1px solid #d5ad61; border-radius: 14px; bottom: 92px; box-shadow: 0 18px 48px rgba(25, 22, 16, .28); color: var(--ink); cursor: pointer; display: flex; gap: 12px; max-width: min(330px, calc(100vw - 32px)); padding: 13px 16px; position: fixed; right: 24px; text-align: left; z-index: 93; }
+.notification-live-toast svg { fill: none; flex: 0 0 auto; height: 25px; stroke: #a36d18; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; width: 25px; }
+.notification-live-toast span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.notification-live-toast strong { color: #8d5d13; font-size: 14px; }
+.notification-live-toast small { font-size: 13px; line-height: 1.45; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .notification-backdrop { background: rgba(13, 13, 11, .45); border: 0; cursor: pointer; inset: 0; position: fixed; z-index: 94; }
 .notification-drawer { animation: notification-slide-in .22s ease-out; background: #f8f6f1; box-shadow: -18px 0 55px rgba(21, 18, 13, .2); display: flex; flex-direction: column; inset: 0 0 0 auto; max-width: 430px; position: fixed; width: min(100%, 430px); z-index: 95; }
 .notification-drawer > header { align-items: flex-start; background: var(--ink); color: white; display: flex; justify-content: space-between; padding: 26px 24px 22px; }
-.notification-drawer > header small { color: var(--gold-light); font-size: 8px; font-weight: 750; letter-spacing: .18em; }
+.notification-drawer > header small { color: var(--gold-light); font-size: 11px; font-weight: 750; letter-spacing: .18em; }
 .notification-drawer > header h2 { font-family: Georgia, serif; font-size: 29px; font-weight: 450; margin: 6px 0 3px; }
-.notification-drawer > header p { color: #bdb6a8; font-size: 9px; margin: 0; }
+.notification-drawer > header p { color: #d3ccbf; font-size: 13px; margin: 0; }
 .notification-drawer > header button { align-items: center; background: transparent; border: 1px solid #59564e; border-radius: 50%; color: white; cursor: pointer; display: flex; font-size: 25px; height: 42px; justify-content: center; line-height: 1; width: 42px; }
 .push-opt-in { align-items: center; background: #eee9df; border-bottom: 1px solid #ded6c6; display: flex; gap: 14px; justify-content: space-between; padding: 14px 18px; }
 .push-opt-in > div { min-width: 0; }
-.push-opt-in strong { display: block; font-size: 10px; }
-.push-opt-in p { color: #746f65; font-size: 8px; line-height: 1.55; margin: 4px 0 0; }
+.push-opt-in strong { display: block; font-size: 14px; }
+.push-opt-in p { color: #746f65; font-size: 12px; line-height: 1.55; margin: 4px 0 0; }
 .push-opt-in.active { background: #e4f0ea; color: #2f6752; }
 .push-opt-in.denied, .push-opt-in.error { background: #f4e5e1; color: #914f43; }
-.push-opt-in button { background: var(--ink); border: 0; color: white; cursor: pointer; flex: 0 0 auto; font-size: 9px; font-weight: 750; min-height: 38px; padding: 0 13px; }
+.push-opt-in button { background: var(--ink); border: 0; color: white; cursor: pointer; flex: 0 0 auto; font-size: 13px; font-weight: 750; min-height: 42px; padding: 0 15px; }
 .push-opt-in.active button { background: transparent; border: 1px solid #739685; color: #2f6752; }
 .push-opt-in button:disabled { cursor: wait; opacity: .55; }
-.notification-read-all { background: #efe8d8; border: 0; border-bottom: 1px solid #ded6c6; color: #765c2d; cursor: pointer; font-size: 10px; font-weight: 750; min-height: 44px; padding: 0 20px; text-align: right; }
+.notification-read-all { background: #efe8d8; border: 0; border-bottom: 1px solid #ded6c6; color: #765c2d; cursor: pointer; font-size: 13px; font-weight: 750; min-height: 46px; padding: 0 20px; text-align: right; }
 .notification-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 10px 14px 20px; }
-.notification-card { align-items: flex-start; background: transparent; border: 0; border-bottom: 1px solid #e3ddd1; color: var(--ink); cursor: pointer; display: grid; gap: 11px; grid-template-columns: 8px minmax(0, 1fr); padding: 16px 10px; text-align: left; width: 100%; }
+.notification-card { align-items: flex-start; background: transparent; border: 0; border-bottom: 1px solid #e3ddd1; color: var(--ink); cursor: pointer; display: grid; gap: 12px; grid-template-columns: 9px minmax(0, 1fr); padding: 18px 12px; text-align: left; width: 100%; }
 .notification-card:hover { background: white; }
 .notification-card.read { opacity: .68; }
-.notification-state { background: #b98a38; border-radius: 50%; height: 8px; margin-top: 18px; width: 8px; }
+.notification-card.ending-soon { background: #fff8e8; border: 1px solid #dfbd78; border-radius: 14px; margin: 8px 0; }
+.notification-card.ending-soon:hover { background: #fff3d5; }
+.notification-state { background: #b98a38; border-radius: 50%; height: 9px; margin-top: 23px; width: 9px; }
+.notification-card.ending-soon .notification-state { background: #c5392f; box-shadow: 0 0 0 4px rgba(197, 57, 47, .12); }
 .notification-card.read .notification-state { background: #c8c4bb; }
 .notification-card > span:last-child { display: flex; flex-direction: column; min-width: 0; }
-.notification-card small { color: #8b857a; font-size: 8px; }
-.notification-card strong { font-size: 11px; margin: 5px 0; }
-.notification-card p { color: #6e6960; font-size: 9px; line-height: 1.65; margin: 0; }
-.notification-card em { color: #927139; font-size: 8px; font-style: normal; font-weight: 700; margin-top: 8px; }
+.notification-kind { align-self: flex-start; background: #c5392f; border-radius: 999px; color: white; font-size: 11px; letter-spacing: .03em; margin-bottom: 7px; padding: 4px 8px; }
+.notification-card small { color: #7c766c; font-size: 12px; }
+.notification-card strong { font-size: 17px; line-height: 1.35; margin: 6px 0; }
+.notification-card p { color: #57534c; font-size: 14px; line-height: 1.55; margin: 0; }
+.notification-card em { color: #825f25; font-size: 12px; font-style: normal; font-weight: 700; margin-top: 10px; }
 .notification-empty { padding: 70px 24px; text-align: center; }
 .notification-empty strong { font-family: Georgia, serif; font-size: 20px; }
-.notification-empty p { color: #817b70; font-size: 9px; line-height: 1.7; }
-.notification-account-link { align-items: center; background: white; border-top: 1px solid #ddd6c9; display: flex; font-size: 10px; font-weight: 750; justify-content: center; min-height: calc(56px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); }
+.notification-empty p { color: #817b70; font-size: 14px; line-height: 1.7; }
+.notification-account-link { align-items: center; background: white; border-top: 1px solid #ddd6c9; display: flex; font-size: 14px; font-weight: 750; justify-content: center; min-height: calc(56px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); }
 @keyframes notification-slide-in { from { opacity: .4; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes notification-toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Arabica is the BBK display and Thai reading face. Keep mono only for clocks/codes. */
 .brand-copy strong,
@@ -1011,11 +1021,12 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
   .seller-form-grid { grid-template-columns: 1fr; }
   .seller-form-grid .wide { grid-column: auto; }
   .seller-form-actions { align-items: stretch; flex-direction: column; gap: 14px; }
-  .notification-fab { bottom: max(86px, calc(78px + env(safe-area-inset-bottom))); height: 52px; right: 14px; width: 52px; }
+  .notification-fab { bottom: max(86px, calc(78px + env(safe-area-inset-bottom))); height: 56px; right: 14px; width: 56px; }
+  .notification-live-toast { bottom: max(154px, calc(146px + env(safe-area-inset-bottom))); left: 14px; max-width: none; right: 14px; }
   .notification-drawer { animation-name: notification-sheet-in; border-radius: 22px 22px 0 0; inset: auto 0 0; max-height: 86svh; max-width: none; width: 100%; }
   .notification-drawer > header { border-radius: 22px 22px 0 0; padding: 22px 19px 18px; }
   .notification-drawer > header h2 { font-size: 26px; }
-  .notification-scroll { padding-left: 8px; padding-right: 8px; }
+  .notification-scroll { padding-left: 10px; padding-right: 10px; }
 }
 
 @keyframes notification-sheet-in { from { opacity: .5; transform: translateY(36px); } to { opacity: 1; transform: translateY(0); } }

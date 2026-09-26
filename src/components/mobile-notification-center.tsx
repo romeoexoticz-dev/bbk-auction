@@ -112,6 +112,12 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
     return () => { void channel.unsubscribe(); };
   }, [router, userId]);
 
+  useEffect(() => {
+    if (!liveMessage) return;
+    const timeout = window.setTimeout(() => setLiveMessage(""), 8000);
+    return () => window.clearTimeout(timeout);
+  }, [liveMessage]);
+
   function openNotification(item: MobileNotification) {
     const href = notificationHref(item);
     if (!item.read_at) {
@@ -192,6 +198,10 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
   return (
     <div className={`mobile-notifications ${open ? "open" : ""}`}>
       <span aria-live="polite" className="sr-only">{liveMessage}</span>
+      {liveMessage && !open && <button className="notification-live-toast" onClick={() => setOpen(true)} type="button">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+        <span><strong>แจ้งเตือนใหม่</strong><small>{liveMessage.replace("มีแจ้งเตือนใหม่: ", "")}</small></span>
+      </button>}
       <button aria-controls="mobile-notification-drawer" aria-expanded={open} aria-label={`การแจ้งเตือน${unreadCount > 0 ? ` มี ${unreadCount} รายการใหม่` : ""}`} className="notification-fab" onClick={() => setOpen(true)} type="button">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
         {unreadCount > 0 && <span>{unreadCount > 99 ? "99+" : unreadCount}</span>}
@@ -208,9 +218,9 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
         </section>
         {unreadCount > 0 && <button className="notification-read-all" disabled={isPending} onClick={markAllRead} type="button">ทำเครื่องหมายว่าอ่านทั้งหมด</button>}
         <div className="notification-scroll">
-          {items.length > 0 ? items.map((item) => <button className={`notification-card ${item.read_at ? "read" : "unread"}`} key={item.id} onClick={() => openNotification(item)} type="button">
+          {items.length > 0 ? items.map((item) => <button className={`notification-card ${item.read_at ? "read" : "unread"} ${item.notification_type === "auction_ending_soon" ? "ending-soon" : ""}`} key={item.id} onClick={() => openNotification(item)} type="button">
             <span className="notification-state" />
-            <span><small>{dateTime(item.created_at)}</small><strong>{item.title}</strong><p>{item.message}</p><em>แตะเพื่อดูรายละเอียด →</em></span>
+            <span>{item.notification_type === "auction_ending_soon" && <b className="notification-kind">ใกล้ปิดประมูล</b>}<small>{dateTime(item.created_at)}</small><strong>{item.title}</strong><p>{item.message}</p><em>แตะเพื่อดูรายการและเสนอราคา →</em></span>
           </button>) : <div className="notification-empty"><strong>ยังไม่มีการแจ้งเตือน</strong><p>เมื่อมีราคาใหม่ ใกล้หมดเวลา ผลประมูล หรือสถานะ Order ระบบจะแจ้งที่นี่</p></div>}
         </div>
         <a className="notification-account-link" href="/account">ดูบัญชีและประวัติทั้งหมด</a>
