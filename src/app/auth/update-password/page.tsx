@@ -21,7 +21,7 @@ export default async function UpdatePasswordPage() {
         <p>ลิงก์กู้คืนได้รับการยืนยันแล้ว ตั้งรหัสผ่านใหม่ที่มีอย่างน้อย 8 ตัวอักษร</p>
       </section>
       <section className="auth-panel">
-        <div><span className="dash-kicker">ขั้นตอนสุดท้าย</span><h2>รหัสผ่านใหม่</h2><p>เมื่อบันทึกสำเร็จ ระบบจะพาไปหน้าบัญชีของคุณ</p></div>
+        <div><span className="dash-kicker">ขั้นตอน 2 จาก 2</span><h2>รหัสผ่านใหม่</h2><p>เมื่อบันทึกสำเร็จ ระบบจะพาไปหน้าบัญชีของคุณ</p></div>
         <div className="auth-card"><UpdatePasswordForm /></div>
       </section>
     </main>

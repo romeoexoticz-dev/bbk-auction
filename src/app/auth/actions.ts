@@ -201,7 +201,7 @@ export async function requestPasswordReset(
     secure: process.env.NODE_ENV === "production",
   });
 
-  return { message: "ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว กรุณาตรวจ Inbox และ Spam หรือ Junk" };
+  return { message: "ส่งลิงก์แล้ว กรุณาเปิด Inbox หรือ Spam/Junk แล้วกดลิงก์ ระบบจะแสดงช่องให้ตั้งรหัสผ่านใหม่" };
 }
 
 export async function updatePassword(

@@ -26,7 +26,7 @@ export function AuthForm({ nextPath }: { nextPath: string }) {
         <button className={mode === "sign-in" ? "active" : ""} onClick={() => setMode("sign-in")} role="tab" type="button">เข้าสู่ระบบ</button>
         <button className={mode === "sign-up" ? "active" : ""} onClick={() => setMode("sign-up")} role="tab" type="button">สมัครสมาชิก</button>
       </div>}
-      {mode === "forgot-password" && <div className="auth-reset-heading"><small>กู้คืนบัญชี</small><strong>ตั้งรหัสผ่านใหม่</strong><p>กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่</p></div>}
+      {mode === "forgot-password" && <div className="auth-reset-heading"><small>ขั้นตอน 1 จาก 2</small><strong>ขอลิงก์เปลี่ยนรหัสผ่าน</strong><p>กรอกอีเมลที่ใช้สมัครก่อน จากนั้นเปิดลิงก์ในอีเมล ระบบจึงจะแสดงช่อง “รหัสผ่านใหม่” และ “ยืนยันรหัสผ่านใหม่”</p></div>}
       <form action={mode === "sign-in" ? signInAction : mode === "sign-up" ? signUpAction : resetAction}>
         <input name="next" type="hidden" value={nextPath} />
         {mode === "sign-up" && <label>ชื่อที่ใช้แสดง<input autoComplete="name" name="displayName" placeholder="เช่น คุณตาล" type="text" /></label>}
@@ -37,7 +37,7 @@ export function AuthForm({ nextPath }: { nextPath: string }) {
           : state.error ? <p className="form-error" role="alert">{state.error}</p>
           : "message" in state && state.message ? <p className="form-success" role="status">{state.message}</p>
           : null}
-        <button className="button button-gold auth-submit" disabled={pending} onClick={submitFromButton} type="submit">{pending ? "กำลังดำเนินการ..." : mode === "sign-in" ? "เข้าสู่ระบบ" : mode === "sign-up" ? "สร้างบัญชี" : "ส่งลิงก์ตั้งรหัสผ่านใหม่"}</button>
+        <button className="button button-gold auth-submit" disabled={pending} onClick={submitFromButton} type="submit">{pending ? "กำลังดำเนินการ..." : mode === "sign-in" ? "เข้าสู่ระบบ" : mode === "sign-up" ? "สร้างบัญชี" : "ส่งลิงก์ไปที่อีเมล"}</button>
       </form>
       {mode === "sign-in" && <button className="auth-text-action" onClick={() => setMode("forgot-password")} type="button">ลืมรหัสผ่าน?</button>}
       {mode === "forgot-password" && <button className="auth-text-action" onClick={() => setMode("sign-in")} type="button">← กลับไปเข้าสู่ระบบ</button>}
