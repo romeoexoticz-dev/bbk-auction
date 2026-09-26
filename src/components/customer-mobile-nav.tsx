@@ -24,7 +24,7 @@ export function CustomerMobileNav({ signedIn }: { signedIn: boolean }) {
           : item.href === "/"
             ? pathname === "/"
             : false;
-        return <Link className={active ? "active" : ""} href={href} key={item.label}><span aria-hidden="true">{item.icon}</span><small>{item.label}</small></Link>;
+        return <Link className={active ? "active" : ""} href={href} key={item.label}>{item.label === "แจ้งเตือน" ? <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg> : <span aria-hidden="true">{item.icon}</span>}<small>{item.label}</small></Link>;
       })}
     </nav>
   );
