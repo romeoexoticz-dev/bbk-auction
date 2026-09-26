@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { getSupabasePublicEnv, isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -182,10 +183,18 @@ export async function requestPasswordReset(
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const supabase = await createClient();
+  const { url, publishableKey } = getSupabasePublicEnv();
+  const supabase = createSupabaseClient(url, publishableKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      flowType: "implicit",
+      persistSession: false,
+    },
+  });
   const { error } = await supabase.auth.resetPasswordForEmail(
     rawEmail.trim().toLowerCase(),
-    { redirectTo: `${appUrl}/auth/callback?next=/auth/update-password` },
+    { redirectTo: `${appUrl}/auth/recovery` },
   );
 
   if (error?.status === 429 || error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {

@@ -35,7 +35,7 @@ export default async function SignInPage({
       <section className="auth-panel">
         <div><span className="dash-kicker">ยินดีต้อนรับ</span><h2>จัดการบัญชีของคุณ</h2><p>ใช้ Supabase Auth และ session แบบ cookie</p></div>
         {checkEmail && <EmailConfirmationMessage />}
-        {callbackError && <div className="auth-message auth-warning">ยืนยันอีเมลแล้ว แต่เปิดลิงก์คนละเบราว์เซอร์จึงยังไม่ได้สร้างการเข้าสู่ระบบ กรุณาเข้าสู่ระบบอีกครั้งด้านล่าง</div>}
+        {callbackError && <div className="auth-message auth-warning">ลิงก์ยืนยันไม่สำเร็จหรือหมดอายุ กรุณาลองใหม่อีกครั้ง</div>}
         {recoveryExpired && <div className="auth-message auth-warning">ลิงก์ตั้งรหัสผ่านหมดอายุหรือถูกเปิดคนละเบราว์เซอร์ กรุณากด “ลืมรหัสผ่าน?” เพื่อขอลิงก์ใหม่</div>}
         <AuthForm nextPath={nextPath} />
       </section>
