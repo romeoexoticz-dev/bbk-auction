@@ -17,8 +17,19 @@ export type ResendConfirmationState = {
   cooldownUntil?: number;
 };
 
+export type PasswordResetState = {
+  error?: string;
+  message?: string;
+};
+
+export type UpdatePasswordState = {
+  error?: string;
+};
+
 const RESEND_CONFIRMATION_COOKIE = "bbk_email_resend_after";
 const RESEND_CONFIRMATION_COOLDOWN_SECONDS = 60;
+const PASSWORD_RESET_COOKIE = "bbk_password_reset_after";
+const PASSWORD_RESET_COOLDOWN_SECONDS = 60;
 
 function readCredentials(formData: FormData) {
   const email = formData.get("email");
@@ -148,6 +159,78 @@ export async function resendConfirmation(
     message: "ส่งอีเมลยืนยันอีกครั้งแล้ว กรุณาตรวจกล่องอีเมลและโฟลเดอร์ Spam หรือ Junk",
     cooldownUntil: resendAfterTime,
   };
+}
+
+export async function requestPasswordReset(
+  _state: PasswordResetState,
+  formData: FormData,
+): Promise<PasswordResetState> {
+  if (!isSupabaseConfigured()) {
+    return { error: "ยังไม่ได้เชื่อม Supabase กรุณาตั้งค่า .env.local ก่อน" };
+  }
+
+  const rawEmail = formData.get("email");
+  if (typeof rawEmail !== "string" || !rawEmail.includes("@")) {
+    return { error: "กรุณากรอกอีเมลให้ถูกต้อง" };
+  }
+
+  const cookieStore = await cookies();
+  const now = Date.now();
+  const resetAfter = Number(cookieStore.get(PASSWORD_RESET_COOKIE)?.value ?? 0);
+  if (Number.isFinite(resetAfter) && resetAfter > now) {
+    return { error: "ส่งลิงก์แล้ว กรุณารอประมาณ 60 วินาทีก่อนขอใหม่" };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    rawEmail.trim().toLowerCase(),
+    { redirectTo: `${appUrl}/auth/callback?next=/auth/update-password` },
+  );
+
+  if (error?.status === 429 || error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
+    return { error: "ส่งถี่เกินไป กรุณารอประมาณ 60 วินาทีแล้วลองใหม่" };
+  }
+  if (error) return { error: "ยังส่งลิงก์ไม่ได้ กรุณารอสักครู่แล้วลองใหม่" };
+
+  cookieStore.set(PASSWORD_RESET_COOKIE, String(now + PASSWORD_RESET_COOLDOWN_SECONDS * 1000), {
+    httpOnly: true,
+    maxAge: PASSWORD_RESET_COOLDOWN_SECONDS,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  return { message: "ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว กรุณาตรวจ Inbox และ Spam หรือ Junk" };
+}
+
+export async function updatePassword(
+  _state: UpdatePasswordState,
+  formData: FormData,
+): Promise<UpdatePasswordState> {
+  if (!isSupabaseConfigured()) {
+    return { error: "ยังไม่ได้เชื่อม Supabase กรุณาตั้งค่า .env.local ก่อน" };
+  }
+
+  const password = formData.get("password");
+  const confirmPassword = formData.get("confirmPassword");
+  if (typeof password !== "string" || password.length < 8) {
+    return { error: "รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร" };
+  }
+  if (password !== confirmPassword) {
+    return { error: "รหัสผ่านทั้งสองช่องไม่ตรงกัน" };
+  }
+
+  const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return { error: "ลิงก์ตั้งรหัสผ่านหมดอายุ กรุณาขอลิงก์ใหม่" };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: "ตั้งรหัสผ่านใหม่ไม่สำเร็จ กรุณาขอลิงก์ใหม่" };
+
+  redirect("/account?status=password-updated");
 }
 
 export async function signOut() {

@@ -88,7 +88,13 @@ function dateTime(value: string) {
   }).format(new Date(value));
 }
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const passwordUpdated = params.status === "password-updated";
   const user = await getCurrentUser();
   if (!user) redirect("/auth/sign-in?next=/account");
   const supabase = await createClient();
@@ -171,6 +177,7 @@ export default async function AccountPage() {
     <main className="account-page">
       <header className="market-header detail-header"><Brand /><Link className="button button-outline" href="/">← กลับหน้าตลาด</Link></header>
       <section className="account-hero"><span className="kicker"><i /> MY BBK</span><h1>บัญชีของฉัน</h1><p>{user.email}</p></section>
+      {passwordUpdated && <div className="account-system-message success"><strong>ตั้งรหัสผ่านใหม่สำเร็จ</strong><p>ครั้งต่อไปสามารถใช้รหัสผ่านใหม่นี้เข้าสู่ระบบได้</p></div>}
       {paymentDefault?.review_status === "warning" && <div className="account-system-message warning"><strong>คำเตือนการไม่ชำระครั้งที่ {paymentDefault.strike_count}</strong><p>Order ที่เลยกำหนดถูกยกเลิกแล้ว หากเกิดครั้งที่ 2 ระบบจะระงับสิทธิ์ประมูลเพื่อให้แอดมินตรวจสอบ</p></div>}
       {accountStatus === "suspended" && paymentDefault?.review_status === "pending_review" && <div className="account-system-message danger"><strong>ระงับสิทธิ์ประมูลชั่วคราว</strong><p>พบการไม่ชำระภายในกำหนด {paymentDefault.strike_count} ครั้ง กรุณารอแอดมินตรวจสอบบัญชี</p></div>}
       {paymentDefault?.review_status === "kept_suspended" && <div className="account-system-message danger"><strong>บัญชียังคงถูกระงับ</strong><p>{paymentDefault.review_reason || "กรุณาติดต่อทีมงานเพื่อขอตรวจสอบข้อมูล"}</p></div>}
