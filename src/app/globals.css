@@ -194,8 +194,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .auction-facts small, .auction-facts span { color: #8a857b; display: block; font-size: 8px; }
 .auction-facts strong { display: block; font-family: Georgia, serif; font-size: 27px; margin: 7px 0; }
 .countdown-large { color: #9a7130; font-family: var(--font-geist-mono) !important; font-size: 21px !important; }
-.realtime-status { align-items: center; color: #3f7862; display: flex; font-size: 8px; gap: 6px; margin: 0 0 13px; }
-.realtime-status i { background: #3f8a6f; border: 3px solid #d9ece4; border-radius: 50%; height: 10px; width: 10px; }
+.realtime-status { align-items: center; color: #3f7862; display: flex; font-size: 12px; font-weight: 700; gap: 8px; line-height: 1.5; margin: 0 0 13px; }
+.realtime-status i { background: #3f8a6f; border: 3px solid #d9ece4; border-radius: 50%; flex: 0 0 auto; height: 12px; width: 12px; }
+.realtime-status[data-state="connecting"] { color: #796535; }
+.realtime-status[data-state="connecting"] i { background: #bf9133; border-color: #f5e8c8; }
+.realtime-status[data-state="degraded"] { color: #9a5b21; }
+.realtime-status[data-state="degraded"] i { background: #c9732a; border-color: #f5dfca; }
+.realtime-status[data-state="offline"] { color: #8a4b45; }
+.realtime-status[data-state="offline"] i { background: #a85850; border-color: #f0d7d4; }
 .bid-form { background: #f3f0e9; border: 1px solid #ded8ca; padding: 20px; scroll-margin-top: 92px; }
 .bid-form > label { color: #67625a; display: block; font-size: 9px; font-weight: 700; margin-bottom: 8px; }
 .bid-input-row { align-items: stretch; display: flex; }

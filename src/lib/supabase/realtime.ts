@@ -10,9 +10,21 @@ export type RealtimeChangeEvent = {
   old_record: Record<string, unknown> | null;
 };
 
+export type RealtimeSubscriptionStatus =
+  | "SUBSCRIBED"
+  | "TIMED_OUT"
+  | "CLOSED"
+  | "CHANNEL_ERROR";
+
+export type RealtimeStatusHandler = (
+  status: RealtimeSubscriptionStatus,
+  error?: Error,
+) => void;
+
 export function subscribeToAuction(
   auctionId: string,
   onCommittedChange: (event: RealtimeChangeEvent) => void,
+  onStatus?: RealtimeStatusHandler,
 ): RealtimeChannel {
   const supabase = createClient();
 
@@ -21,7 +33,9 @@ export function subscribeToAuction(
     .on("broadcast", { event: "*" }, ({ payload }) => {
       onCommittedChange(payload as RealtimeChangeEvent);
     })
-    .subscribe();
+    .subscribe((status, error) => {
+      onStatus?.(status, error);
+    });
 }
 
 export function subscribeToNotifications(
