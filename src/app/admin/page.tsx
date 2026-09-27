@@ -511,10 +511,11 @@ export async function AdminDashboardContent({
           const auction = Array.isArray(item.auctions) ? item.auctions[0] : item.auctions;
           const evidenceUrl = evidence ? paymentSignedUrlByPath.get(evidence.object_path) : undefined;
           return <article className="admin-review-card" key={item.id}>
+            {evidence?.is_test && <div className="payment-test-banner"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong><p>ตรวจขั้นตอนและไฟล์จำลองเท่านั้น การอนุมัติจะไม่เปลี่ยนออเดอร์เป็นชำระแล้ว</p></div>}
             <div className="admin-review-heading">
               <span className="review-number">{String(index + 1).padStart(2, "0")}</span>
               <div><span>{item.order_number}</span><h3>{auction?.title ?? "รายการประมูล"}</h3><small>{paymentBuyerById.get(item.buyer_id) || "ลูกค้า BBK"} · ส่ง {timeLabel(item.payment_submitted_at)}</small></div>
-              <span className="status-pill review"><i />รอตรวจสลิป</span>
+              <span className="status-pill review"><i />{evidence?.is_test ? "รอตรวจสลิปทดสอบ" : "รอตรวจสลิป"}</span>
             </div>
             <div className="admin-review-facts payment-review-facts">
               <span><small>ราคาชนะ</small><strong>{formatBaht(Number(item.winning_amount))}</strong></span>
