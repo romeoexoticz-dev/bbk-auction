@@ -196,7 +196,7 @@ export async function reviewOrderPayment(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("review_order_payment", {
+  const { data, error } = await supabase.rpc("review_order_payment", {
     p_order_id: orderId,
     p_decision: decision,
     p_reason: reason,
@@ -210,7 +210,48 @@ export async function reviewOrderPayment(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/account");
   revalidatePath(`/orders/${orderId}`);
-  redirect(`/admin?paymentStatus=${decision === "approve" ? "approved" : "needs-correction"}#payments`);
+  const reviewedOrder = (Array.isArray(data) ? data[0] : data) as { payment_evidence_is_test?: boolean } | null;
+  const outcome = reviewedOrder?.payment_evidence_is_test
+    ? decision === "approve" ? "test-approved" : "test-needs-correction"
+    : decision === "approve" ? "approved" : "needs-correction";
+  redirect(`/admin?paymentStatus=${outcome}#payments`);
+}
+
+export async function enableOrderPaymentTestMode(formData: FormData) {
+  const orderId = formData.get("orderId");
+  const reasonValue = formData.get("reason");
+  const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
+
+  if (process.env.NEXT_PUBLIC_PAYMENT_TEST_MODE_ENABLED !== "true") {
+    redirect("/admin?paymentTestError=app-disabled#shipping");
+  }
+  if (typeof orderId !== "string" || !/^[0-9a-f-]{36}$/i.test(orderId)) {
+    redirect("/admin?paymentTestError=invalid-order#shipping");
+  }
+  if (reason.length < 5 || reason.length > 500) {
+    redirect("/admin?paymentTestError=reason-required#shipping");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("enable_order_payment_test_mode", {
+    p_order_id: orderId,
+    p_reason: reason,
+  });
+
+  if (error) {
+    console.error("Unable to enable payment test mode", { code: error.code });
+    const errorCode = error.message.includes("PAYMENT_WINDOW_EXPIRED")
+      ? "window-expired"
+      : error.message.includes("SHIPPING_AMOUNT_REQUIRED")
+        ? "shipping-required"
+        : "enable-failed";
+    redirect(`/admin?paymentTestError=${errorCode}#shipping`);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/account");
+  revalidatePath(`/orders/${orderId}`);
+  redirect("/admin?paymentTestStatus=enabled#shipping");
 }
 
 export async function configureOrderShipping(formData: FormData) {

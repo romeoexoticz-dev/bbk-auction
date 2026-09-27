@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { advanceOrderFulfillment, configureOrderShipping, grantAdministratorRole, returnApprovedAuctionForEdit, reviewBidderVerification, reviewOrderPayment, reviewPaymentDefaultAccount } from "@/app/admin/actions";
+import { advanceOrderFulfillment, configureOrderShipping, enableOrderPaymentTestMode, grantAdministratorRole, returnApprovedAuctionForEdit, reviewBidderVerification, reviewOrderPayment, reviewPaymentDefaultAccount } from "@/app/admin/actions";
 import { AUCTION_CATEGORIES } from "@/lib/auctions/categories";
 import { formatBaht } from "@/lib/auctions/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -50,6 +50,14 @@ type PaymentEvidenceRow = {
   mime_type: string;
   byte_size: number;
   submitted_at: string;
+  is_test: boolean;
+};
+
+type PaymentTestOrderRow = {
+  order_id: string;
+  active: boolean;
+  enabled_at: string;
+  expires_at: string;
 };
 
 type ShippingOrderRow = {
@@ -144,6 +152,11 @@ const auditLabels: Record<string, string> = {
   "payment.approved": "อนุมัติหลักฐานการชำระ",
   "payment.needs_correction": "ส่งหลักฐานกลับให้แก้ไข",
   "payment.review_workflow_installed": "ติดตั้งระบบตรวจหลักฐานการชำระ",
+  "payment.test_mode_installed": "ติดตั้งโหมดทดสอบการชำระ",
+  "payment.test_mode_enabled": "เปิดทดสอบแนบสลิปรายออเดอร์",
+  "payment.test_evidence_submitted": "ลูกค้าส่งสลิปจำลอง",
+  "payment.test_approved": "อนุมัติสลิปจำลอง",
+  "payment.test_needs_correction": "ส่งสลิปจำลองกลับให้แก้ไข",
   "shipping.workflow_installed": "ติดตั้งระบบค่าส่งและจัดส่ง",
   "shipping.amount_configured": "กำหนดค่าจัดส่ง",
   "shipping.preparing": "เริ่มเตรียมจัดส่ง",
@@ -197,7 +210,11 @@ export default async function AdminDashboard({
   const identityError = typeof params.identityError === "string";
   const paymentApproved = params.paymentStatus === "approved";
   const paymentNeedsCorrection = params.paymentStatus === "needs-correction";
+  const paymentTestApproved = params.paymentStatus === "test-approved";
+  const paymentTestNeedsCorrection = params.paymentStatus === "test-needs-correction";
   const paymentError = typeof params.paymentError === "string";
+  const paymentTestEnabled = params.paymentTestStatus === "enabled";
+  const paymentTestError = typeof params.paymentTestError === "string" ? params.paymentTestError : "";
   const shippingConfigured = params.shippingStatus === "configured";
   const shippingError = typeof params.shippingError === "string";
   const fulfillmentPreparing = params.fulfillmentStatus === "preparing";
@@ -209,6 +226,7 @@ export default async function AdminDashboard({
   const adminRoleGranted = params.adminRoleStatus === "granted";
   const adminRoleAlreadyExists = params.adminRoleStatus === "already-admin";
   const adminRoleError = typeof params.adminRoleError === "string" ? params.adminRoleError : "";
+  const appPaymentTestModeEnabled = process.env.NEXT_PUBLIC_PAYMENT_TEST_MODE_ENABLED === "true";
 
   const supabase = await createClient();
   const [liveResult, auditResult, rejectedBidResult, correctionResult, bidderResult, paymentResult, shippingResult, fulfillmentResult, defaultResult, interestSummaryResult, recentInterestResult, administratorResult, currentUserResult] = await Promise.all([
@@ -292,6 +310,17 @@ export default async function AdminDashboard({
   const recentInterests = (recentInterestResult.data ?? []) as RecentInterestRow[];
   const administrators = (administratorResult.data ?? []) as AdministratorRow[];
   const currentAdminEmail = currentUserResult.data.user?.email ?? "";
+  const shippingOrderIds = shippingOrders.map((item) => item.id);
+  const { data: paymentTestOrderData, error: paymentTestOrderError } = appPaymentTestModeEnabled && shippingOrderIds.length > 0
+    ? await supabase
+        .from("payment_test_orders")
+        .select("order_id,active,enabled_at,expires_at")
+        .in("order_id", shippingOrderIds)
+    : { data: [] as PaymentTestOrderRow[], error: null };
+  if (paymentTestOrderError) console.error("Unable to load payment test orders", { code: paymentTestOrderError.code });
+  const paymentTestOrderById = new Map(
+    ((paymentTestOrderData ?? []) as PaymentTestOrderRow[]).map((item) => [item.order_id, item]),
+  );
   const interestCountByCategory = new Map(interestSummary.map((item) => [item.category, Number(item.interested_count)]));
   const totalInterestedCustomers = new Set(recentInterests.map((item) => item.user_id)).size;
   const bidderIds = [...new Set([
@@ -311,7 +340,7 @@ export default async function AdminDashboard({
   const bidderProfileById = new Map((bidderProfiles ?? []).map((profile) => [profile.id, profile]));
   const [{ data: paymentEvidenceData }, { data: paymentBuyerProfiles }] = await Promise.all([
     paymentEvidenceIds.length > 0
-      ? supabase.from("payment_evidence_submissions").select("id,object_path,original_name,mime_type,byte_size,submitted_at").in("id", paymentEvidenceIds)
+      ? supabase.from("payment_evidence_submissions").select("id,object_path,original_name,mime_type,byte_size,submitted_at,is_test").in("id", paymentEvidenceIds)
       : Promise.resolve({ data: [] as PaymentEvidenceRow[] }),
     paymentBuyerIds.length > 0
       ? supabase.from("profiles").select("id,display_name").in("id", paymentBuyerIds)
@@ -329,13 +358,18 @@ export default async function AdminDashboard({
     <>
       <section className="dashboard-intro admin-intro"><div><span className="dash-kicker">ระบบส่วนกลาง</span><h1>ภาพรวมหลังบ้าน BBK</h1><p>งานประมูล สมาชิก การชำระ และการจัดส่งอยู่ในระบบเดียว</p></div><div className="system-health"><i /><span><small>สถานะระบบ</small><strong>เชื่อมฐานข้อมูลแล้ว</strong></span></div></section>
       <div className="admin-alert"><span>!</span><p><strong>ระบบเงินจริงถูกปิด</strong> — สร้างและเปิดรายการทดสอบได้ แต่ยังไม่มีการเรียกเก็บเงินจริง</p></div>
+      {appPaymentTestModeEnabled && <div className="payment-test-banner admin-payment-test-banner" role="note"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong><p>หลังบ้านเปิดเฉพาะเครื่องมือทดสอบรายออเดอร์ การอนุมัติสลิปจำลองจะไม่เปลี่ยนสถานะเป็นชำระแล้วและไม่เข้าสู่คิวจัดส่ง</p></div>}
       {returned && <div className="seller-page-message success"><strong>ยกเลิกรายการและส่งกลับแล้ว</strong><p>รายการไม่มีผู้ประมูล เหตุผลและผู้ดำเนินการถูกบันทึกใน Audit trail</p></div>}
       {identityApproved && <div className="seller-page-message success"><strong>อนุมัติผู้ประมูลแล้ว</strong><p>บัญชีนี้สามารถวางประมูลได้แล้ว</p></div>}
       {identityRejected && <div className="seller-page-message success"><strong>ส่งบัญชีกลับแล้ว</strong><p>สมาชิกจะเห็นเหตุผลและแก้ไขข้อมูลได้</p></div>}
       {identityError && <div className="seller-page-message error"><strong>ตรวจบัญชีไม่สำเร็จ</strong><p>กรุณาตรวจเหตุผล สถานะอีเมล และลองใหม่</p></div>}
       {paymentApproved && <div className="seller-page-message success"><strong>อนุมัติหลักฐานการชำระแล้ว</strong><p>คำสั่งซื้อเปลี่ยนเป็นตรวจสอบแล้วและบันทึก Audit trail เรียบร้อย</p></div>}
       {paymentNeedsCorrection && <div className="seller-page-message success"><strong>ส่งหลักฐานกลับให้แก้ไขแล้ว</strong><p>ลูกค้าจะเห็นเหตุผลและส่งไฟล์ใหม่ได้เมื่อระบบรับชำระเปิดอยู่</p></div>}
+      {paymentTestApproved && <div className="seller-page-message success"><strong>ตรวจสลิปจำลองผ่านแล้ว</strong><p>TEST — ไม่ใช่การชำระเงินจริง · ออเดอร์ยังคงรอชำระและไม่เข้าคิวจัดส่ง</p></div>}
+      {paymentTestNeedsCorrection && <div className="seller-page-message success"><strong>ส่งสลิปจำลองกลับให้แก้ไขแล้ว</strong><p>TEST — ลูกค้าสามารถแนบไฟล์จำลองใหม่ได้ภายในช่วงทดสอบ</p></div>}
       {paymentError && <div className="seller-page-message error"><strong>ตรวจหลักฐานไม่สำเร็จ</strong><p>กรุณาโหลดหน้าใหม่ ตรวจสถานะ และลองอีกครั้ง</p></div>}
+      {paymentTestEnabled && <div className="seller-page-message success"><strong>เปิดโหมดทดสอบให้ออเดอร์แล้ว</strong><p>TEST — ไม่ใช่การชำระเงินจริง · ลูกค้าแนบสลิปจำลองได้ภายใน 24 ชั่วโมง</p></div>}
+      {paymentTestError && <div className="seller-page-message error"><strong>เปิดโหมดทดสอบไม่สำเร็จ</strong><p>{paymentTestError === "window-expired" ? "ออเดอร์เลยกำหนดชำระแล้ว" : paymentTestError === "shipping-required" ? "ต้องกำหนดค่าจัดส่งก่อน" : paymentTestError === "app-disabled" ? "สวิตช์โหมดทดสอบในแอปยังปิดอยู่" : "กรุณาตรวจสถานะออเดอร์และลองใหม่"}</p></div>}
       {shippingConfigured && <div className="seller-page-message success"><strong>กำหนดค่าจัดส่งแล้ว</strong><p>ยอดรวมคำสั่งซื้อคำนวณใหม่และแจ้งลูกค้าเรียบร้อย</p></div>}
       {shippingError && <div className="seller-page-message error"><strong>กำหนดค่าจัดส่งไม่สำเร็จ</strong><p>ค่าจัดส่งแก้ไขได้ก่อนลูกค้าส่งหลักฐานการชำระเท่านั้น</p></div>}
       {fulfillmentPreparing && <div className="seller-page-message success"><strong>เปลี่ยนสถานะเป็นกำลังเตรียมส่งแล้ว</strong><p>ลูกค้าได้รับการแจ้งเตือนภายในเว็บไซต์</p></div>}
@@ -459,21 +493,23 @@ export default async function AdminDashboard({
               <span><small>ค่าจัดส่ง</small><strong>{formatBaht(Number(item.shipping_amount))}</strong></span>
               <span><small>ยอดที่ต้องตรวจ</small><strong>{formatBaht(Number(item.total_amount))}</strong></span>
             </div>
-            <div className="admin-media-row"><div className="admin-media-meta"><strong>หลักฐานส่วนตัว</strong><small>{evidence ? `${evidence.original_name} · ${Math.ceil(Number(evidence.byte_size) / 1024)} KB · ${evidence.mime_type}` : "ไม่พบข้อมูลไฟล์"}</small></div><div><Link href={`/orders/${item.id}`}>เปิดใบออเดอร์</Link>{evidenceUrl ? <a href={evidenceUrl} rel="noreferrer" target="_blank">เปิดหลักฐานเพื่อตรวจ</a> : <span>ไม่พบลิงก์ไฟล์</span>}</div></div>
+            <div className="admin-media-row"><div className="admin-media-meta"><strong>{evidence?.is_test ? "สลิปจำลองส่วนตัว" : "หลักฐานส่วนตัว"}</strong><small>{evidence ? `${evidence.original_name} · ${Math.ceil(Number(evidence.byte_size) / 1024)} KB · ${evidence.mime_type}` : "ไม่พบข้อมูลไฟล์"}</small></div><div><Link href={`/orders/${item.id}`}>เปิดใบออเดอร์</Link>{evidenceUrl ? <a href={evidenceUrl} rel="noreferrer" target="_blank">{evidence?.is_test ? "เปิดสลิปจำลองเพื่อตรวจ" : "เปิดหลักฐานเพื่อตรวจ"}</a> : <span>ไม่พบลิงก์ไฟล์</span>}</div></div>
             <form action={reviewOrderPayment} className="admin-review-form">
               <input name="orderId" type="hidden" value={item.id} />
               <label>เหตุผลประกอบการตรวจ
-                <textarea defaultValue="ตรวจยอด เลขรายการ และหลักฐานการโอนแล้ว" maxLength={500} minLength={5} name="reason" required rows={3} />
+                <textarea defaultValue={evidence?.is_test ? "ตรวจไฟล์จำลองและขั้นตอนระบบแล้ว ไม่มีการรับเงินจริง" : "ตรวจยอด เลขรายการ และหลักฐานการโอนแล้ว"} maxLength={500} minLength={5} name="reason" required rows={3} />
               </label>
-              <div><button className="button button-outline review-reject" name="decision" type="submit" value="needs_correction">ส่งกลับให้แก้ไข</button><button className="button button-gold" name="decision" type="submit" value="approve">อนุมัติยอดชำระ</button></div>
+              <div><button className="button button-outline review-reject" name="decision" type="submit" value="needs_correction">ส่งกลับให้แก้ไข</button><button className="button button-gold" name="decision" type="submit" value="approve">{evidence?.is_test ? "อนุมัติหลักฐานทดสอบ" : "อนุมัติยอดชำระ"}</button></div>
             </form>
           </article>;
-        })}</div> : <div className="admin-empty"><strong>ยังไม่มีหลักฐานรอตรวจ</strong><p>ระบบรับเงินจริงยังปิดอยู่ เมื่อเปิดแล้ว ลูกค้าที่ส่งสลิปจะปรากฏในคิวนี้</p></div>}
+        })}</div> : <div className="admin-empty"><strong>ยังไม่มีหลักฐานรอตรวจ</strong><p>เมื่อเปิดโหมดทดสอบรายออเดอร์และลูกค้าส่งสลิปจำลอง รายการจะปรากฏในคิวนี้</p></div>}
       </section>
       <section className="panel" id="shipping">
         <div className="panel-heading"><div><h2>กำหนดค่าจัดส่งราย Order</h2><p>ต้องกำหนดก่อนลูกค้าส่งหลักฐาน เมื่อส่งหลักฐานแล้วระบบจะล็อกยอดทันที</p></div><span className="table-filter">{shippingOrders.length} รายการ</span></div>
         {shippingOrders.length > 0 ? <div className="admin-review-list">{shippingOrders.map((item, index) => {
           const auction = Array.isArray(item.auctions) ? item.auctions[0] : item.auctions;
+          const paymentTestOrder = paymentTestOrderById.get(item.id);
+          const paymentTestActive = Boolean(paymentTestOrder?.active);
           return <article className="admin-review-card" key={item.id}>
             <div className="admin-review-heading">
               <span className="review-number">{String(index + 1).padStart(2, "0")}</span>
@@ -498,6 +534,16 @@ export default async function AdminDashboard({
               </label>
               <div><button className="button button-gold" type="submit">{item.shipping_configured_at ? "บันทึกค่าจัดส่งใหม่" : "ยืนยันค่าจัดส่ง"}</button></div>
             </form>
+            {appPaymentTestModeEnabled && item.shipping_configured_at && (
+              paymentTestActive ? <div className="payment-test-banner payment-test-control"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong><p>ลูกค้าแนบสลิปจำลองได้ถึง {timeLabel(paymentTestOrder!.expires_at)} และการอนุมัติจะไม่ส่งออเดอร์เข้าคิวจัดส่ง</p></div> : <form action={enableOrderPaymentTestMode} className="admin-review-form payment-test-control">
+                <input name="orderId" type="hidden" value={item.id} />
+                <div className="payment-test-banner"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong><p>เปิดสิทธิ์แนบสลิปจำลองเฉพาะออเดอร์นี้เป็นเวลา 24 ชั่วโมง</p></div>
+                <label>เหตุผลการเปิดทดสอบ
+                  <textarea defaultValue="เปิดทดสอบแนบสลิปสำหรับออเดอร์จำลอง ไม่มีการรับเงินจริง" maxLength={500} minLength={5} name="reason" required rows={3} />
+                </label>
+                <div><button className="button button-outline" type="submit">เปิดโหมดแนบสลิปทดสอบ</button></div>
+              </form>
+            )}
           </article>;
         })}</div> : <div className="admin-empty"><strong>ไม่มี Order รอกำหนดค่าส่ง</strong><p>Order ที่รอชำระและยังไม่ส่งสลิปจะปรากฏตรงนี้</p></div>}
       </section>

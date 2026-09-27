@@ -29,7 +29,9 @@ export async function submitPaymentEvidence(
   _state: PaymentEvidenceState,
   formData: FormData,
 ): Promise<PaymentEvidenceState> {
-  if (process.env.NEXT_PUBLIC_PAYMENTS_ENABLED !== "true") {
+  const livePaymentEnabled = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === "true";
+  const testPaymentEnabled = process.env.NEXT_PUBLIC_PAYMENT_TEST_MODE_ENABLED === "true";
+  if (!livePaymentEnabled && !testPaymentEnabled) {
     return { error: "ระบบแนบสลิปยังปิดอยู่จนกว่าจะยืนยันบัญชีร้าน" };
   }
 
@@ -54,6 +56,17 @@ export async function submitPaymentEvidence(
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) return { error: "กรุณาเข้าสู่ระบบใหม่" };
 
+  const { data: orderOwner, error: orderOwnerError } = await supabase
+    .from("orders")
+    .select("buyer_id")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (orderOwnerError || !orderOwner || orderOwner.buyer_id !== userData.user.id) {
+    return {
+      error: "บัญชีนี้ไม่ใช่ผู้ชนะประมูลของ Order นี้ กรุณาเข้าสู่ระบบด้วยบัญชีลูกค้าที่ชนะประมูล",
+    };
+  }
+
   const objectPath = `${userData.user.id}/${orderId}/${randomUUID()}.${extension}`;
   const bytes = Buffer.from(await evidence.arrayBuffer());
   const { error: uploadError } = await supabase.storage
@@ -61,11 +74,16 @@ export async function submitPaymentEvidence(
     .upload(objectPath, bytes, { contentType: evidence.type, upsert: false });
 
   if (uploadError) {
-    console.error("Unable to upload payment evidence", { code: uploadError.name });
+    console.error("Unable to upload payment evidence", {
+      code: uploadError.name,
+      message: uploadError.message,
+      status: "status" in uploadError ? uploadError.status : undefined,
+      statusCode: "statusCode" in uploadError ? uploadError.statusCode : undefined,
+    });
     return { error: "อัปโหลดหลักฐานไม่สำเร็จ ระบบอาจยังไม่เปิดรับชำระ" };
   }
 
-  const { error: submitError } = await supabase.rpc("submit_order_payment_evidence", {
+  const { data: submissionData, error: submitError } = await supabase.rpc("submit_order_payment_evidence", {
     p_order_id: orderId,
     p_object_path: objectPath,
     p_original_name: evidence.name.slice(0, 255),
@@ -81,5 +99,12 @@ export async function submitPaymentEvidence(
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/account");
   revalidatePath("/admin");
-  return { success: "ส่งหลักฐานแล้ว กรุณารอแอดมินตรวจสอบ" };
+  const submission = (Array.isArray(submissionData) ? submissionData[0] : submissionData) as
+    | { is_test?: boolean }
+    | null;
+  return {
+    success: submission?.is_test
+      ? "TEST — ส่งสลิปจำลองแล้ว กรุณารอแอดมินตรวจ (ไม่ใช่การชำระเงินจริง)"
+      : "ส่งหลักฐานแล้ว กรุณารอแอดมินตรวจสอบ",
+  };
 }

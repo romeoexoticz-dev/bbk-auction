@@ -27,7 +27,7 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
   const supabase = await createClient();
   const { data: order, error } = await supabase
     .from("orders")
-    .select("id,order_number,buyer_id,status,created_at,winning_amount,buyer_fee_amount,buyer_fee_vat_amount,shipping_amount,shipping_configured_at,shipping_note,total_amount,payment_due_at,payment_review_state,payment_evidence_path,payment_submitted_at,payment_review_reason,payment_expired_at,cancellation_reason,preparing_at,carrier,tracking_number,shipped_at,auctions(id,title)")
+    .select("id,order_number,buyer_id,status,created_at,winning_amount,buyer_fee_amount,buyer_fee_vat_amount,shipping_amount,shipping_configured_at,shipping_note,total_amount,payment_due_at,payment_review_state,payment_evidence_path,payment_evidence_is_test,payment_submitted_at,payment_review_reason,payment_expired_at,cancellation_reason,preparing_at,carrier,tracking_number,shipped_at,auctions(id,title)")
     .eq("id", id)
     .maybeSingle();
 
@@ -50,11 +50,14 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
     timeZone: "Asia/Bangkok",
   }).format(new Date(order.payment_due_at));
   const appPaymentsEnabled = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === "true";
-  const [{ data: databasePaymentsEnabled }, { data: isAdmin }] = await Promise.all([
-    supabase.rpc("payment_submission_is_enabled"),
+  const appPaymentTestModeEnabled = process.env.NEXT_PUBLIC_PAYMENT_TEST_MODE_ENABLED === "true";
+  const [{ data: databasePaymentMode }, { data: isAdmin }] = await Promise.all([
+    supabase.rpc("payment_submission_mode", { p_order_id: id }),
     supabase.rpc("has_role", { p_role: "admin", p_user_id: user.id }),
   ]);
-  const paymentsEnabled = appPaymentsEnabled && databasePaymentsEnabled === true;
+  const livePaymentEnabled = appPaymentsEnabled && databasePaymentMode === "live";
+  const testPaymentEnabled = appPaymentTestModeEnabled && databasePaymentMode === "test";
+  const paymentsEnabled = livePaymentEnabled || testPaymentEnabled;
   const shippingConfigured = Boolean(order.shipping_configured_at);
   const isOrderOwner = order.buyer_id === user.id;
   const buyerName = buyerProfile?.display_name?.trim() || "สมาชิก BBK";
@@ -118,11 +121,13 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
         <section className="order-next-step" aria-label="สถานะและขั้นตอนถัดไป">
           <span className="receipt-section-label">สถานะและขั้นตอนถัดไป</span>
         {!shippingConfigured && order.status === "pending_payment" && <div className="payment-pending-card"><strong>รอแอดมินกำหนดค่าจัดส่ง</strong><p>ยังไม่ควรชำระเงินจนกว่ายอดรวมสุทธิจะปรากฏ ระบบจะส่งการแจ้งเตือนเมื่อกำหนดค่าส่งแล้ว</p></div>}
-        {shippingConfigured && !paymentsEnabled && order.status === "pending_payment" && <div className="payment-pending-card"><strong>ยอดรวมพร้อมแล้ว แต่ยังปิดรับเงินจริง</strong><p>ครบกำหนดตามกติกา {dueAt} ปุ่มแนบสลิปจะเปิดเมื่อบัญชีร้านและสวิตช์รับชำระได้รับการยืนยันจากคุณตาล</p></div>}
+        {shippingConfigured && !paymentsEnabled && order.status === "pending_payment" && <div className="payment-pending-card"><strong>ยอดรวมพร้อมแล้ว แต่ยังปิดรับเงินจริง</strong><p>ครบกำหนดตามกติกา {dueAt} หากเป็นรายการทดสอบ แอดมินสามารถเปิดโหมดแนบสลิปจำลองเฉพาะออเดอร์นี้ได้</p></div>}
         {order.status === "cancelled" && order.cancellation_reason === "payment_window_expired" && <div className="payment-expired-card"><strong>Order ถูกยกเลิกเพราะเลยกำหนดชำระ</strong><p>ระบบบันทึกเหตุการณ์และแจ้งเตือนบัญชีแล้ว หากต้องการตรวจสอบ กรุณาติดต่อทีมแอดมินพร้อมเลข Order นี้</p></div>}
-        {shippingConfigured && paymentsEnabled && order.status === "pending_payment" && order.payment_review_state === "not_submitted" && <section className="payment-section"><h2>แนบหลักฐานการชำระ</h2><p>ตรวจยอดและบัญชีปลายทางให้ถูกต้องก่อนส่ง หลักฐานจะแสดงเฉพาะคุณและทีมตรวจสอบ</p><PaymentEvidenceForm orderId={order.id} requestKey={randomUUID()} /></section>}
-        {order.status === "pending_payment" && order.payment_review_state === "submitted" && <div className="payment-review-card"><strong>ส่งหลักฐานแล้ว · รอแอดมินตรวจ</strong><p>ระบบบันทึกเวลาและไฟล์แล้ว ไม่ต้องส่งซ้ำ</p>{signedEvidence?.signedUrl && <a href={signedEvidence.signedUrl} rel="noreferrer" target="_blank">เปิดหลักฐานที่ส่ง</a>}</div>}
-        {order.status === "pending_payment" && order.payment_review_state === "needs_correction" && <section className="payment-section correction"><h2>กรุณาส่งหลักฐานใหม่</h2><p>{order.payment_review_reason || "แอดมินขอให้ตรวจและส่งหลักฐานใหม่"}</p>{signedEvidence?.signedUrl && <a href={signedEvidence.signedUrl} rel="noreferrer" target="_blank">ดูไฟล์เดิม</a>}{paymentsEnabled && <PaymentEvidenceForm orderId={order.id} requestKey={randomUUID()} />}</section>}
+        {shippingConfigured && paymentsEnabled && isOrderOwner && order.status === "pending_payment" && order.payment_review_state === "not_submitted" && <section className="payment-section"><h2>{testPaymentEnabled ? "แนบสลิปจำลอง" : "แนบหลักฐานการชำระ"}</h2><p>{testPaymentEnabled ? "ไฟล์ทดสอบจะแสดงเฉพาะคุณและทีมตรวจสอบ และจะไม่ทำให้ออเดอร์เป็นชำระแล้ว" : "ตรวจยอดและบัญชีปลายทางให้ถูกต้องก่อนส่ง หลักฐานจะแสดงเฉพาะคุณและทีมตรวจสอบ"}</p><PaymentEvidenceForm orderId={order.id} requestKey={randomUUID()} testMode={testPaymentEnabled} /></section>}
+        {order.status === "pending_payment" && order.payment_review_state === "submitted" && <div className="payment-review-card">{order.payment_evidence_is_test && <div className="payment-test-banner"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong></div>}<strong>{order.payment_evidence_is_test ? "ส่งสลิปจำลองแล้ว · รอแอดมินตรวจ" : "ส่งหลักฐานแล้ว · รอแอดมินตรวจ"}</strong><p>ระบบบันทึกเวลาและไฟล์แล้ว ไม่ต้องส่งซ้ำ</p>{signedEvidence?.signedUrl && <a href={signedEvidence.signedUrl} rel="noreferrer" target="_blank">เปิดหลักฐานที่ส่ง</a>}</div>}
+        {order.status === "pending_payment" && order.payment_review_state === "needs_correction" && <section className="payment-section correction">{order.payment_evidence_is_test && <div className="payment-test-banner"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong></div>}<h2>{order.payment_evidence_is_test ? "กรุณาส่งสลิปจำลองใหม่" : "กรุณาส่งหลักฐานใหม่"}</h2><p>{order.payment_review_reason || "แอดมินขอให้ตรวจและส่งหลักฐานใหม่"}</p>{signedEvidence?.signedUrl && <a href={signedEvidence.signedUrl} rel="noreferrer" target="_blank">ดูไฟล์เดิม</a>}{paymentsEnabled && isOrderOwner && <PaymentEvidenceForm orderId={order.id} requestKey={randomUUID()} testMode={testPaymentEnabled} />}</section>}
+        {shippingConfigured && paymentsEnabled && !isOrderOwner && order.status === "pending_payment" && ["not_submitted", "needs_correction"].includes(order.payment_review_state) && <div className="payment-pending-card"><strong>บัญชีนี้ไม่ใช่บัญชีผู้ชนะประมูล</strong><p>เฉพาะบัญชีลูกค้าที่ชนะประมูลเท่านั้นที่แนบหลักฐานได้ กรุณาเปิด Order นี้จากบัญชีผู้ชนะ</p></div>}
+        {order.payment_review_state === "approved" && order.payment_evidence_is_test && <div className="payment-review-card"><div className="payment-test-banner"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong></div><strong>แอดมินตรวจสลิปจำลองผ่านแล้ว</strong><p>การทดสอบสำเร็จ แต่ออเดอร์ยังไม่ถือว่าชำระเงินและจะไม่เข้าสู่ขั้นตอนจัดส่ง</p></div>}
         {order.payment_review_state === "approved" && order.status === "paid" && <div className="tracking-card"><strong>แอดมินตรวจสอบยอดชำระแล้ว</strong><p>คำสั่งซื้อกำลังรอทีมงานเริ่มเตรียมจัดส่ง</p></div>}
         {order.status === "preparing" && <div className="tracking-card"><strong>กำลังเตรียมจัดส่ง</strong><p>ร้านกำลังตรวจสินค้าและบรรจุหีบห่อ เมื่อส่งแล้วเลขพัสดุจะแสดงที่หน้านี้</p></div>}
         {order.tracking_number && <div className="tracking-card"><small>เลขพัสดุ</small><strong>{order.tracking_number}</strong><span>{order.carrier ?? "บริษัทขนส่ง"}</span></div>}

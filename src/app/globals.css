@@ -761,6 +761,12 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
 .payment-review-card strong { display: block; font-size: 10px; }
 .payment-review-card p { font-size: 9px; line-height: 1.7; margin: 5px 0; }
 .payment-review-facts strong { overflow-wrap: anywhere; }
+.payment-test-banner { background: #fff1df; border: 2px dashed #c4462c; color: #7d2819; margin: 0 0 14px; padding: 13px 15px; }
+.payment-test-banner strong { display: block; font-size: 13px; letter-spacing: .04em; line-height: 1.35; }
+.payment-test-banner p { color: #7d2819; font-size: 10px; line-height: 1.6; margin: 5px 0 0; }
+.admin-payment-test-banner { margin-bottom: 20px; }
+.payment-test-control { margin-top: 16px; }
+form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padding: 16px; }
 
 /* Mobile-first in-app notifications */
 .mobile-notifications { position: relative; z-index: 94; }
@@ -1031,6 +1037,9 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
   .report-pending-list article { flex-direction: column; }
   .report-pending-list article > div:last-child { align-items: flex-start; }
   .payment-upload-form .button { align-self: stretch; width: 100%; }
+  .payment-test-banner { padding: 14px; }
+  .payment-test-banner strong { font-size: 15px; }
+  .payment-test-banner p { font-size: 12px; }
   .shipping-config-form { grid-template-columns: 1fr; }
   .shipping-config-form > div { grid-column: auto; }
   .seller-form-grid { grid-template-columns: 1fr; }
