@@ -140,7 +140,15 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
         </section>
       </main>
 
-      <footer className="market-footer"><Brand /><p>ต้นแบบระบบประมูลใหม่ของบอล แบงค์เก่า · ยังไม่เปิดทำธุรกรรมเงินจริง</p></footer>
+      <footer className="market-footer">
+        <Brand />
+        <nav aria-label="ข้อมูลและความปลอดภัย" className="market-footer-links">
+          <Link href="/auction-rules">กติกาประมูล</Link>
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/fraud-warning">เตือนช่องปลอม</Link>
+        </nav>
+        <p>ต้นแบบระบบประมูลใหม่ของบอล แบงค์เก่า · ยังไม่เปิดทำธุรกรรมเงินจริง</p>
+      </footer>
     </div>
   );
 }
