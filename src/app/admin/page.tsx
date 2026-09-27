@@ -198,10 +198,28 @@ function timeLabel(value: string) {
   }).format(new Date(value));
 }
 
-export default async function AdminDashboard({
+export type AdminSection = "overview" | "auctions" | "members" | "interests" | "payments" | "shipping" | "fulfillment" | "defaults" | "team" | "security" | "audit";
+
+const sectionIntro: Record<AdminSection, { kicker: string; title: string; description: string }> = {
+  overview: { kicker: "ระบบส่วนกลาง", title: "ภาพรวมหลังบ้าน BBK", description: "ดูงานที่ต้องทำและเลือกเข้าหมวดที่ต้องการ" },
+  auctions: { kicker: "รายการประมูล", title: "ตรวจและแก้รายการประมูล", description: "จัดการรายการที่อนุมัติแล้วและส่งกลับแก้ไขอย่างมีประวัติ" },
+  members: { kicker: "สมาชิก", title: "อนุมัติผู้ประมูล", description: "ตรวจบัญชีลูกค้าก่อนให้สิทธิ์เข้าร่วมประมูล" },
+  interests: { kicker: "ข้อมูลลูกค้า", title: "ความสนใจของลูกค้า", description: "ดูหมวดสินค้าที่ลูกค้าอยากประมูลเพื่อวางแผนรายการ" },
+  payments: { kicker: "การชำระ", title: "ตรวจหลักฐานการชำระ", description: "ตรวจสลิปจริงหรือสลิปจำลองโดยไม่ปะปนกัน" },
+  shipping: { kicker: "ยอดสุทธิ", title: "กำหนดค่าจัดส่ง", description: "กำหนดค่าส่งก่อนเปิดให้ลูกค้าแนบหลักฐาน" },
+  fulfillment: { kicker: "คลังและขนส่ง", title: "เตรียมและจัดส่งสินค้า", description: "เริ่มเตรียมสินค้าและบันทึกเลขพัสดุหลังตรวจยอด" },
+  defaults: { kicker: "ควบคุมความเสี่ยง", title: "ตรวจบัญชีไม่ชำระ", description: "พิจารณาบัญชีที่ไม่ชำระตามกำหนดซ้ำ" },
+  team: { kicker: "สิทธิ์เข้าถึง", title: "จัดการทีมแอดมิน", description: "เพิ่มและตรวจรายชื่อผู้มีสิทธิ์เข้าหลังบ้าน" },
+  security: { kicker: "ความปลอดภัย", title: "ตรวจการเสนอราคาผิดปกติ", description: "ดูการกดรัว ราคาต่ำ และคำขอที่ระบบปฏิเสธ" },
+  audit: { kicker: "ตรวจสอบย้อนหลัง", title: "เหตุการณ์ระบบ", description: "ดูประวัติการเปลี่ยนสถานะและการทำงานสำคัญ" },
+};
+
+export async function AdminDashboardContent({
   searchParams,
+  section = "overview",
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
+  section?: AdminSection;
 }) {
   const params = await searchParams;
   const returned = params.status === "returned";
@@ -353,10 +371,11 @@ export default async function AdminDashboard({
     ? await supabase.storage.from("payment-evidence").createSignedUrls(paymentEvidence.map((item) => item.object_path), 600)
     : { data: [] as { path: string; signedUrl: string }[] };
   const paymentSignedUrlByPath = new Map((paymentSignedData ?? []).map((item) => [item.path, item.signedUrl]));
+  const intro = sectionIntro[section];
 
   return (
     <>
-      <section className="dashboard-intro admin-intro"><div><span className="dash-kicker">ระบบส่วนกลาง</span><h1>ภาพรวมหลังบ้าน BBK</h1><p>งานประมูล สมาชิก การชำระ และการจัดส่งอยู่ในระบบเดียว</p></div><div className="system-health"><i /><span><small>สถานะระบบ</small><strong>เชื่อมฐานข้อมูลแล้ว</strong></span></div></section>
+      <section className="dashboard-intro admin-intro"><div><span className="dash-kicker">{intro.kicker}</span><h1>{intro.title}</h1><p>{intro.description}</p></div><div className="system-health"><i /><span><small>สถานะระบบ</small><strong>เชื่อมฐานข้อมูลแล้ว</strong></span></div></section>
       <div className="admin-alert"><span>!</span><p><strong>ระบบเงินจริงถูกปิด</strong> — สร้างและเปิดรายการทดสอบได้ แต่ยังไม่มีการเรียกเก็บเงินจริง</p></div>
       {appPaymentTestModeEnabled && <div className="payment-test-banner admin-payment-test-banner" role="note"><strong>TEST — ไม่ใช่การชำระเงินจริง</strong><p>หลังบ้านเปิดเฉพาะเครื่องมือทดสอบรายออเดอร์ การอนุมัติสลิปจำลองจะไม่เปลี่ยนสถานะเป็นชำระแล้วและไม่เข้าสู่คิวจัดส่ง</p></div>}
       {returned && <div className="seller-page-message success"><strong>ยกเลิกรายการและส่งกลับแล้ว</strong><p>รายการไม่มีผู้ประมูล เหตุผลและผู้ดำเนินการถูกบันทึกใน Audit trail</p></div>}
@@ -381,7 +400,7 @@ export default async function AdminDashboard({
       {adminRoleGranted && <div className="seller-page-message success"><strong>เพิ่มแอดมินใหม่แล้ว</strong><p>สิทธิ์ถูกบันทึก พร้อม Audit trail และแจ้งเตือนทีมแอดมินแล้ว</p></div>}
       {adminRoleAlreadyExists && <div className="seller-page-message success"><strong>บัญชีนี้เป็นแอดมินอยู่แล้ว</strong><p>ระบบไม่เพิ่มสิทธิ์ซ้ำและไม่มีข้อมูลซ้ำในฐานข้อมูล</p></div>}
       {adminRoleError && <div className="seller-page-message error"><strong>เพิ่มแอดมินไม่สำเร็จ</strong><p>{adminRoleError === "invalid-password" ? "รหัสผ่านของแอดมินผู้ดำเนินการไม่ถูกต้อง" : adminRoleError === "rate-limited" ? "กรอกรหัสผ่านผิดครบ 5 ครั้ง กรุณารอ 15 นาทีแล้วลองใหม่" : adminRoleError === "target-ineligible" ? "ไม่พบบัญชีที่พร้อมใช้งาน กรุณาให้บัญชีนั้นสมัครและยืนยันอีเมลก่อน" : "กรุณาตรวจอีเมล รหัสผ่าน เหตุผล และลองใหม่"}</p></div>}
-      <section className="metric-grid admin-metrics">
+      {section === "overview" && <><section className="metric-grid admin-metrics">
         <article><span className="metric-icon">▣</span><small>รายการที่กำลัง Live</small><strong>{liveResult.count ?? 0}</strong><em>ข้อมูลจริงในฐานข้อมูล</em></article>
         <article><span className="metric-icon">⌕</span><small>ผู้ประมูลรอตรวจ</small><strong>{bidderReviews.length}</strong><em className={bidderReviews.length > 0 ? "warn" : "good"}>{bidderReviews.length > 0 ? "มีบัญชีรอดำเนินการ" : "คิวว่าง"}</em></article>
         <article><span className="metric-icon">♙</span><small>โหมดผู้ขาย</small><strong>BBK</strong><em>ผู้ขายรายเดียว · ปิดรับภายนอก</em></article>
@@ -389,11 +408,21 @@ export default async function AdminDashboard({
       </section>
       <section className="admin-quick-grid" aria-label="งานหลักของแอดมิน">
         <Link href="/seller#new"><span>＋</span><strong>เพิ่มรายการประมูล</strong><small>สร้าง ตรวจ และตั้งเวลาในหน้าเดียว</small></Link>
-        <Link href="/admin#members"><span>{bidderReviews.length}</span><strong>ผู้ประมูลรอตรวจ</strong><small>อนุมัติบัญชีลูกค้า</small></Link>
-        <Link href="/admin#payments"><span>{paymentReviews.length}</span><strong>หลักฐานรอตรวจ</strong><small>ตรวจยอดและสลิป</small></Link>
-        <Link href="/admin#fulfillment"><span>{fulfillmentOrders.length}</span><strong>รายการรอจัดส่ง</strong><small>เตรียมของและใส่เลขพัสดุ</small></Link>
+        <Link href="/admin/members"><span>{bidderReviews.length}</span><strong>ผู้ประมูลรอตรวจ</strong><small>อนุมัติบัญชีลูกค้า</small></Link>
+        <Link href="/admin/payments"><span>{paymentReviews.length}</span><strong>หลักฐานรอตรวจ</strong><small>ตรวจยอดและสลิป</small></Link>
+        <Link href="/admin/fulfillment"><span>{fulfillmentOrders.length}</span><strong>รายการรอจัดส่ง</strong><small>เตรียมของและใส่เลขพัสดุ</small></Link>
       </section>
-      <section className="panel admin-interest-panel" id="interests">
+      <section className="admin-category-grid" aria-label="หมวดงานหลังบ้าน">
+        <Link href="/admin/auctions"><strong>รายการประมูล</strong><small>ตรวจและส่งกลับแก้ไข</small></Link>
+        <Link href="/admin/interests"><strong>ความสนใจลูกค้า</strong><small>วางแผนสินค้าที่ลูกค้าต้องการ</small></Link>
+        <Link href="/admin/shipping"><strong>ค่าจัดส่ง</strong><small>กำหนดยอดสุทธิก่อนรับหลักฐาน</small></Link>
+        <Link href="/admin/defaults"><strong>บัญชีไม่ชำระ</strong><small>ตรวจและคืนสิทธิ์บัญชี</small></Link>
+        <Link href="/admin/team"><strong>ทีมแอดมิน</strong><small>ดูรายชื่อและเพิ่มผู้ดูแล</small></Link>
+        <Link href="/admin/security"><strong>ความปลอดภัย</strong><small>ตรวจการกดประมูลผิดปกติ</small></Link>
+        <Link href="/admin/audit"><strong>เหตุการณ์ระบบ</strong><small>เปิดประวัติตรวจสอบย้อนหลัง</small></Link>
+        <Link href="/admin/reports"><strong>รายงาน</strong><small>ยอดประมูล การชำระ และค้างส่ง</small></Link>
+      </section></>}
+      {section === "interests" && <section className="panel admin-interest-panel" id="interests">
         <div className="panel-heading"><div><h2>ลูกค้าอยากประมูลอะไร</h2><p>ข้อมูลส่วนตัวสำหรับวางแผนสินค้า แสดงเฉพาะบัญชีแอดมิน</p></div><span className="table-filter">{totalInterestedCustomers} ลูกค้า</span></div>
         <div className="admin-interest-summary">
           {AUCTION_CATEGORIES.map((category) => <article key={category.value}>
@@ -406,8 +435,8 @@ export default async function AdminDashboard({
             <div>{item.categories.map((category) => <span key={category}>{category}</span>)}</div>
           </article>)}
         </div> : <div className="admin-empty"><strong>ยังไม่มีลูกค้าเลือกหมวด</strong><p>เมื่อลูกค้ากดบันทึกสิ่งที่สนใจ ข้อมูลสรุปและการแจ้งเตือนจะปรากฏที่นี่</p></div>}
-      </section>
-      <section className="panel admin-management-panel" id="administrators">
+      </section>}
+      {section === "team" && <section className="panel admin-management-panel" id="administrators">
         <div className="panel-heading"><div><h2>จัดการแอดมิน</h2><p>เพิ่มได้เฉพาะบัญชีที่สมัคร ยืนยันอีเมล และมีสถานะใช้งานแล้ว</p></div><span className="table-filter">{administrators.length} แอดมิน</span></div>
         <div className="admin-management-grid">
           <form action={grantAdministratorRole} className="admin-review-form admin-grant-form">
@@ -433,12 +462,12 @@ export default async function AdminDashboard({
           </div>
         </div>
         <div className="admin-role-safety"><strong>ความปลอดภัย</strong><span>ไม่เก็บรหัสผ่าน · ผิด 5 ครั้งล็อก 15 นาที · ทุกการเพิ่มสิทธิ์มี Audit trail</span></div>
-      </section>
-      <section className="panel audit-panel" id="audit">
+      </section>}
+      {section === "audit" && <section className="panel audit-panel" id="audit">
         <div className="panel-heading"><div><h2>เหตุการณ์ล่าสุด</h2><p>ประวัติการทำงานจริงสำหรับตรวจสอบย้อนหลัง</p></div></div>
         {audits.length > 0 ? <ol className="timeline">{audits.map((item) => <li key={item.id}><i /><div><strong>{auditLabels[item.event_type] ?? item.event_type}</strong><p>{item.entity_id.slice(0, 12)}</p><small>{timeLabel(item.created_at)}</small></div></li>)}</ol> : <div className="admin-empty compact"><p>ยังไม่มีเหตุการณ์</p></div>}
-      </section>
-      <section className="panel bid-security-panel" id="bid-security">
+      </section>}
+      {section === "security" && <section className="panel bid-security-panel" id="bid-security">
         <div className="panel-heading"><div><h2>การเสนอราคาที่ถูกปฏิเสธ</h2><p>ตรวจการกดรัว ราคาต่ำกว่าขั้นต่ำ และบัญชีที่ยังไม่มีสิทธิ์ โดยไม่เปิดเผยข้อมูลนี้แก่ลูกค้าคนอื่น</p></div><span className="table-filter">{rejectedBidAttempts.length} เหตุการณ์</span></div>
         {rejectedBidAttempts.length > 0 ? <div className="bid-security-list">{rejectedBidAttempts.map((item) => {
           const auction = Array.isArray(item.auctions) ? item.auctions[0] : item.auctions;
@@ -450,8 +479,8 @@ export default async function AdminDashboard({
             <span><small>เวลา</small><strong>{timeLabel(item.created_at)}</strong>{item.retry_after_seconds ? <em>รอ {item.retry_after_seconds} วินาที</em> : null}</span>
           </article>;
         })}</div> : <div className="admin-empty compact"><strong>ยังไม่พบการกดผิดปกติ</strong><p>เมื่อระบบปฏิเสธคำขอ เหตุผลและเวลาจะปรากฏที่นี่</p></div>}
-      </section>
-      <section className="panel" id="members">
+      </section>}
+      {section === "members" && <section className="panel" id="members">
         <div className="panel-heading"><div><h2>อนุมัติผู้ประมูล</h2><p>อีเมลผ่านการยืนยันแล้ว แอดมินตรวจชื่อและสถานะบัญชีก่อนอนุมัติ</p></div><span className="table-filter">{bidderReviews.length} บัญชี</span></div>
         {bidderReviews.length > 0 ? <div className="admin-review-list">{bidderReviews.map((item, index) => {
           const profile = bidderProfileById.get(item.user_id);
@@ -474,8 +503,8 @@ export default async function AdminDashboard({
             </form>
           </article>;
         })}</div> : <div className="admin-empty"><strong>ยังไม่มีบัญชีรอตรวจ</strong><p>สมาชิกที่ยืนยันอีเมลและกดส่งให้แอดมินจะปรากฏตรงนี้</p></div>}
-      </section>
-      <section className="panel" id="payments">
+      </section>}
+      {section === "payments" && <section className="panel" id="payments">
         <div className="panel-heading"><div><h2>ตรวจหลักฐานการชำระ</h2><p>ไฟล์เป็นข้อมูลส่วนตัว เปิดดูได้เฉพาะลูกค้าเจ้าของรายการและทีมแอดมิน/การเงิน</p></div><span className="table-filter">{paymentReviews.length} รายการ</span></div>
         {paymentReviews.length > 0 ? <div className="admin-review-list">{paymentReviews.map((item, index) => {
           const evidence = paymentEvidenceById.get(item.payment_evidence_id);
@@ -503,8 +532,8 @@ export default async function AdminDashboard({
             </form>
           </article>;
         })}</div> : <div className="admin-empty"><strong>ยังไม่มีหลักฐานรอตรวจ</strong><p>เมื่อเปิดโหมดทดสอบรายออเดอร์และลูกค้าส่งสลิปจำลอง รายการจะปรากฏในคิวนี้</p></div>}
-      </section>
-      <section className="panel" id="shipping">
+      </section>}
+      {section === "shipping" && <section className="panel" id="shipping">
         <div className="panel-heading"><div><h2>กำหนดค่าจัดส่งราย Order</h2><p>ต้องกำหนดก่อนลูกค้าส่งหลักฐาน เมื่อส่งหลักฐานแล้วระบบจะล็อกยอดทันที</p></div><span className="table-filter">{shippingOrders.length} รายการ</span></div>
         {shippingOrders.length > 0 ? <div className="admin-review-list">{shippingOrders.map((item, index) => {
           const auction = Array.isArray(item.auctions) ? item.auctions[0] : item.auctions;
@@ -546,8 +575,8 @@ export default async function AdminDashboard({
             )}
           </article>;
         })}</div> : <div className="admin-empty"><strong>ไม่มี Order รอกำหนดค่าส่ง</strong><p>Order ที่รอชำระและยังไม่ส่งสลิปจะปรากฏตรงนี้</p></div>}
-      </section>
-      <section className="panel" id="fulfillment">
+      </section>}
+      {section === "fulfillment" && <section className="panel" id="fulfillment">
         <div className="panel-heading"><div><h2>เตรียมและบันทึกการจัดส่ง</h2><p>แสดงเฉพาะ Order ที่ตรวจยอดแล้วหรือกำลังเตรียมส่ง</p></div><span className="table-filter">{fulfillmentOrders.length} รายการ</span></div>
         {fulfillmentOrders.length > 0 ? <div className="admin-review-list">{fulfillmentOrders.map((item, index) => {
           const auction = Array.isArray(item.auctions) ? item.auctions[0] : item.auctions;
@@ -591,8 +620,8 @@ export default async function AdminDashboard({
             </form>}
           </article>;
         })}</div> : <div className="admin-empty"><strong>ยังไม่มี Order รอจัดส่ง</strong><p>เมื่อแอดมินอนุมัติหลักฐานการชำระ รายการจะเข้าคิวเตรียมส่งอัตโนมัติ</p></div>}
-      </section>
-      <section className="panel" id="payment-defaults">
+      </section>}
+      {section === "defaults" && <section className="panel" id="payment-defaults">
         <div className="panel-heading"><div><h2>ตรวจบัญชีไม่ชำระซ้ำ</h2><p>บัญชีจะเข้าคิวนี้เมื่อไม่ชำระภายใน 24 ชั่วโมงเป็นครั้งที่ 2 ระบบระงับสิทธิ์ไว้จนกว่าแอดมินจะตัดสิน</p></div><span className="table-filter">{paymentDefaults.length} บัญชี</span></div>
         {paymentDefaults.length > 0 ? <div className="admin-review-list">{paymentDefaults.map((item, index) => <article className="admin-review-card" key={item.user_id}>
           <div className="admin-review-heading">
@@ -612,8 +641,8 @@ export default async function AdminDashboard({
             <div><button className="button button-outline review-reject" name="decision" type="submit" value="keep_suspended">คงการระงับ</button><button className="button button-gold" name="decision" type="submit" value="reinstate">คืนสิทธิ์ประมูล</button></div>
           </form>
         </article>)}</div> : <div className="admin-empty"><strong>ไม่มีบัญชีรอตรวจ</strong><p>ครั้งแรกระบบจะยกเลิก Order และเตือน ครั้งที่ 2 จึงระงับและส่งเข้าคิวนี้</p></div>}
-      </section>
-      <section className="panel" id="corrections">
+      </section>}
+      {section === "auctions" && <section className="panel" id="corrections">
         <div className="panel-heading"><div><h2>แก้ไขรายการที่อนุมัติแล้ว</h2><p>ส่งกลับได้เฉพาะรายการ Scheduled/Live ที่ยังไม่มีผู้ประมูล ระบบจะตรวจซ้ำในฐานข้อมูลก่อนเปลี่ยนสถานะ</p></div><span className="table-filter">{corrections.length} รายการ</span></div>
         {corrections.length > 0 ? <div className="admin-review-list">{corrections.map((item) => <article className="admin-review-card" key={item.id}>
           <div className="admin-review-heading"><div><span>{item.status.toUpperCase()}</span><h3>{item.title}</h3><small>{item.bid_count} bids · ปิด {timeLabel(item.ends_at)}</small></div><span className={`status-pill ${item.status}`}><i />{item.status}</span></div>
@@ -625,8 +654,16 @@ export default async function AdminDashboard({
             <div><button className="button button-outline review-reject" type="submit">ยกเลิกและส่งกลับให้แก้ไข</button></div>
           </form>
         </article>)}</div> : <div className="admin-empty"><strong>ไม่มีรายการที่แก้ไขได้</strong><p>รายการที่มีผู้ประมูลแล้วจะไม่แสดงและไม่สามารถส่งกลับด้วยคำสั่งนี้</p></div>}
-      </section>
-      <section className="safety-bar"><div><span>✓</span><p><strong>หลักควบคุมระบบ</strong> การตัดสินใช้เวลาจากฐานข้อมูล ล็อกรายการ และบันทึกแอดมิน เหตุผล เวลา และสถานะใหม่</p></div><span className="status-pill live"><i />Audit เปิดใช้งาน</span></section>
+      </section>}
+      {section === "overview" && <section className="safety-bar"><div><span>✓</span><p><strong>หลักควบคุมระบบ</strong> การตัดสินใช้เวลาจากฐานข้อมูล ล็อกรายการ และบันทึกแอดมิน เหตุผล เวลา และสถานะใหม่</p></div><span className="status-pill live"><i />Audit เปิดใช้งาน</span></section>}
     </>
   );
+}
+
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return <AdminDashboardContent searchParams={searchParams} />;
 }

@@ -384,6 +384,11 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
 .admin-quick-grid span { color: var(--accent); font-family: Georgia, serif; font-size: 22px; }
 .admin-quick-grid strong { font-size: 10px; }
 .admin-quick-grid small { color: #8a867d; font-size: 8px; line-height: 1.5; }
+.admin-category-grid { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 24px; }
+.admin-category-grid a { background: #20201c; border: 1px solid #34342d; color: white; display: flex; flex-direction: column; gap: 6px; min-height: 92px; padding: 17px; transition: border-color .18s ease, transform .18s ease; }
+.admin-category-grid a:hover { border-color: var(--accent); transform: translateY(-2px); }
+.admin-category-grid strong { font-size: 11px; }
+.admin-category-grid small { color: #aaa79d; font-size: 9px; line-height: 1.55; }
 .admin-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1.6fr) minmax(260px, .7fr); }
 .review-list article { align-items: center; border-bottom: 1px solid #eeeae2; display: grid; gap: 14px; grid-template-columns: 34px minmax(170px, 1fr) minmax(140px, .8fr) 28px; padding: 14px 20px; }
 .review-list article:last-child { border-bottom: 0; }
@@ -945,7 +950,7 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   .hero-showcase { margin-top: 38px; width: 100%; }
   .hero-feature-image { transform: none; }
   .hero-actions, .trust-row { align-items: flex-start; flex-direction: column; }
-  .lot-grid, .metric-grid, .bid-total-preview, .account-grid, .admin-quick-grid { grid-template-columns: 1fr; }
+  .lot-grid, .metric-grid, .bid-total-preview, .account-grid, .admin-quick-grid, .admin-category-grid { grid-template-columns: 1fr; }
   .lot-card { border-radius: 18px; overflow: hidden; }
   .content-section, .how-section { padding-left: 18px; padding-right: 18px; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: 17px; }

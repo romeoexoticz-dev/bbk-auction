@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Brand } from "@/components/brand";
+import { PortalNav } from "@/components/portal-nav";
 
 type PortalShellProps = {
   eyebrow: string;
@@ -20,14 +21,7 @@ export function PortalShell({ eyebrow, title, nav, children, accent = "seller", 
           <span>{eyebrow}</span>
           <strong>{title}</strong>
         </div>
-        <nav aria-label={`เมนู${eyebrow}`}>
-          {nav.map((item) => (
-            <Link className={item.active ? "active" : ""} href={item.href} key={item.label}>
-              <span className="nav-dot" aria-hidden="true" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <PortalNav eyebrow={eyebrow} items={nav} />
         <div className="portal-side-footer">
           <span className="status-dot" /> ต้นแบบระบบ — ยังไม่เปิดเงินจริง
         </div>

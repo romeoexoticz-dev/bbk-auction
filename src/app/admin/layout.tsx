@@ -8,17 +8,19 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "ศูนย์ควบคุมแอดมิน" };
 
 const nav = [
-  { label: "ภาพรวมระบบ", href: "/admin", active: true },
+  { label: "ภาพรวมระบบ", href: "/admin" },
   { label: "จัดการรายการประมูล", href: "/seller" },
-  { label: "อนุมัติผู้ประมูล", href: "/admin#members" },
-  { label: "ความสนใจลูกค้า", href: "/admin#interests" },
-  { label: "ตรวจการชำระ", href: "/admin#payments" },
-  { label: "จัดส่งสินค้า", href: "/admin#fulfillment" },
-  { label: "ตรวจบัญชีไม่ชำระ", href: "/admin#payment-defaults" },
+  { label: "ตรวจและแก้รายการ", href: "/admin/auctions" },
+  { label: "อนุมัติผู้ประมูล", href: "/admin/members" },
+  { label: "ความสนใจลูกค้า", href: "/admin/interests" },
+  { label: "ตรวจการชำระ", href: "/admin/payments" },
+  { label: "กำหนดค่าจัดส่ง", href: "/admin/shipping" },
+  { label: "จัดส่งสินค้า", href: "/admin/fulfillment" },
+  { label: "ตรวจบัญชีไม่ชำระ", href: "/admin/defaults" },
   { label: "รายงานยอดและ Order", href: "/admin/reports" },
-  { label: "ทีมแอดมิน", href: "/admin#administrators" },
-  { label: "ตรวจการกดประมูล", href: "/admin#bid-security" },
-  { label: "เหตุการณ์ระบบ", href: "/admin#audit" },
+  { label: "ทีมแอดมิน", href: "/admin/team" },
+  { label: "ตรวจการกดประมูล", href: "/admin/security" },
+  { label: "เหตุการณ์ระบบ", href: "/admin/audit" },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

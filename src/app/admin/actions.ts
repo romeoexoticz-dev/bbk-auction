@@ -24,25 +24,25 @@ export async function grantAdministratorRole(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (!emailPattern.test(email) || email.length > 320) {
-    redirect("/admin?adminRoleError=invalid-email#administrators");
+    redirect("/admin/team?adminRoleError=invalid-email");
   }
   if (password.length < 1 || password.length > 1024) {
-    redirect("/admin?adminRoleError=password-required#administrators");
+    redirect("/admin/team?adminRoleError=password-required");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?adminRoleError=reason-required#administrators");
+    redirect("/admin/team?adminRoleError=reason-required");
   }
   if (typeof requestKey !== "string" || !/^[0-9a-f-]{36}$/i.test(requestKey)) {
-    redirect("/admin?adminRoleError=invalid-request#administrators");
+    redirect("/admin/team?adminRoleError=invalid-request");
   }
   if (confirmation !== "yes") {
-    redirect("/admin?adminRoleError=confirmation-required#administrators");
+    redirect("/admin/team?adminRoleError=confirmation-required");
   }
 
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
-    redirect(`/auth/sign-in?next=${encodeURIComponent("/admin#administrators")}`);
+    redirect(`/auth/sign-in?next=${encodeURIComponent("/admin/team")}`);
   }
 
   const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
@@ -62,23 +62,23 @@ export async function grantAdministratorRole(formData: FormData) {
 
   if (error) {
     console.error("Unable to grant administrator role", { code: error.code });
-    redirect("/admin?adminRoleError=grant-failed#administrators");
+    redirect("/admin/team?adminRoleError=grant-failed");
   }
 
   const result = (Array.isArray(data) ? data[0] : data) as { outcome?: string } | null;
   if (result?.outcome === "granted") {
     revalidatePath("/admin");
-    redirect("/admin?adminRoleStatus=granted#administrators");
+    redirect("/admin/team?adminRoleStatus=granted");
   }
   if (result?.outcome === "already_admin") {
-    redirect("/admin?adminRoleStatus=already-admin#administrators");
+    redirect("/admin/team?adminRoleStatus=already-admin");
   }
 
   const allowedErrors = new Set(["invalid_password", "rate_limited", "target_ineligible"]);
   const errorCode = result?.outcome && allowedErrors.has(result.outcome)
     ? result.outcome.replaceAll("_", "-")
     : "grant-failed";
-  redirect(`/admin?adminRoleError=${errorCode}#administrators`);
+  redirect(`/admin/team?adminRoleError=${errorCode}`);
 }
 
 export async function reviewAuction(formData: FormData) {
@@ -88,13 +88,13 @@ export async function reviewAuction(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (typeof auctionId !== "string" || !/^[0-9a-f-]{36}$/i.test(auctionId)) {
-    redirect("/admin?error=invalid-auction#review");
+    redirect("/admin/auctions?error=invalid-auction");
   }
   if (decision !== "approve" && decision !== "reject") {
-    redirect("/admin?error=invalid-decision#review");
+    redirect("/admin/auctions?error=invalid-decision");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?error=reason-required#review");
+    redirect("/admin/auctions?error=reason-required");
   }
 
   const supabase = await createClient();
@@ -107,13 +107,13 @@ export async function reviewAuction(formData: FormData) {
   if (error) {
     console.error("Unable to review auction", { code: error.code, decision });
     const errorCode = error.message.includes("AUCTION_WINDOW_ENDED") ? "window-ended" : "review-failed";
-    redirect(`/admin?error=${errorCode}#review`);
+    redirect(`/admin/auctions?error=${errorCode}`);
   }
 
   revalidatePath("/");
   revalidatePath("/seller");
   revalidatePath("/admin");
-  redirect(`/admin?status=${decision === "approve" ? "approved" : "rejected"}#review`);
+  redirect(`/admin/auctions?status=${decision === "approve" ? "approved" : "rejected"}`);
 }
 
 export async function returnApprovedAuctionForEdit(formData: FormData) {
@@ -122,10 +122,10 @@ export async function returnApprovedAuctionForEdit(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (typeof auctionId !== "string" || !/^[0-9a-f-]{36}$/i.test(auctionId)) {
-    redirect("/admin?error=invalid-auction#corrections");
+    redirect("/admin/auctions?error=invalid-auction");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?error=reason-required#corrections");
+    redirect("/admin/auctions?error=reason-required");
   }
 
   const supabase = await createClient();
@@ -137,13 +137,13 @@ export async function returnApprovedAuctionForEdit(formData: FormData) {
   if (error) {
     console.error("Unable to return approved auction for edit", { code: error.code });
     const errorCode = error.message.includes("AUCTION_HAS_BIDS") ? "auction-has-bids" : "return-failed";
-    redirect(`/admin?error=${errorCode}#corrections`);
+    redirect(`/admin/auctions?error=${errorCode}`);
   }
 
   revalidatePath("/");
   revalidatePath("/seller");
   revalidatePath("/admin");
-  redirect("/admin?status=returned#corrections");
+  redirect("/admin/auctions?status=returned");
 }
 
 export async function reviewBidderVerification(formData: FormData) {
@@ -153,13 +153,13 @@ export async function reviewBidderVerification(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (typeof userId !== "string" || !/^[0-9a-f-]{36}$/i.test(userId)) {
-    redirect("/admin?identityError=invalid-user#members");
+    redirect("/admin/members?identityError=invalid-user");
   }
   if (decision !== "approve" && decision !== "reject") {
-    redirect("/admin?identityError=invalid-decision#members");
+    redirect("/admin/members?identityError=invalid-decision");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?identityError=reason-required#members");
+    redirect("/admin/members?identityError=reason-required");
   }
 
   const supabase = await createClient();
@@ -171,12 +171,12 @@ export async function reviewBidderVerification(formData: FormData) {
 
   if (error) {
     console.error("Unable to review bidder verification", { code: error.code, decision });
-    redirect("/admin?identityError=review-failed#members");
+    redirect("/admin/members?identityError=review-failed");
   }
 
   revalidatePath("/admin");
   revalidatePath("/account/verification");
-  redirect(`/admin?identityStatus=${decision === "approve" ? "approved" : "rejected"}#members`);
+  redirect(`/admin/members?identityStatus=${decision === "approve" ? "approved" : "rejected"}`);
 }
 
 export async function reviewOrderPayment(formData: FormData) {
@@ -186,13 +186,13 @@ export async function reviewOrderPayment(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (typeof orderId !== "string" || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-    redirect("/admin?paymentError=invalid-order#payments");
+    redirect("/admin/payments?paymentError=invalid-order");
   }
   if (decision !== "approve" && decision !== "needs_correction") {
-    redirect("/admin?paymentError=invalid-decision#payments");
+    redirect("/admin/payments?paymentError=invalid-decision");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?paymentError=reason-required#payments");
+    redirect("/admin/payments?paymentError=reason-required");
   }
 
   const supabase = await createClient();
@@ -204,7 +204,7 @@ export async function reviewOrderPayment(formData: FormData) {
 
   if (error) {
     console.error("Unable to review order payment", { code: error.code, decision });
-    redirect("/admin?paymentError=review-failed#payments");
+    redirect("/admin/payments?paymentError=review-failed");
   }
 
   revalidatePath("/admin");
@@ -214,7 +214,7 @@ export async function reviewOrderPayment(formData: FormData) {
   const outcome = reviewedOrder?.payment_evidence_is_test
     ? decision === "approve" ? "test-approved" : "test-needs-correction"
     : decision === "approve" ? "approved" : "needs-correction";
-  redirect(`/admin?paymentStatus=${outcome}#payments`);
+  redirect(`/admin/payments?paymentStatus=${outcome}`);
 }
 
 export async function enableOrderPaymentTestMode(formData: FormData) {
@@ -223,13 +223,13 @@ export async function enableOrderPaymentTestMode(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (process.env.NEXT_PUBLIC_PAYMENT_TEST_MODE_ENABLED !== "true") {
-    redirect("/admin?paymentTestError=app-disabled#shipping");
+    redirect("/admin/shipping?paymentTestError=app-disabled");
   }
   if (typeof orderId !== "string" || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-    redirect("/admin?paymentTestError=invalid-order#shipping");
+    redirect("/admin/shipping?paymentTestError=invalid-order");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?paymentTestError=reason-required#shipping");
+    redirect("/admin/shipping?paymentTestError=reason-required");
   }
 
   const supabase = await createClient();
@@ -245,13 +245,13 @@ export async function enableOrderPaymentTestMode(formData: FormData) {
       : error.message.includes("SHIPPING_AMOUNT_REQUIRED")
         ? "shipping-required"
         : "enable-failed";
-    redirect(`/admin?paymentTestError=${errorCode}#shipping`);
+    redirect(`/admin/shipping?paymentTestError=${errorCode}`);
   }
 
   revalidatePath("/admin");
   revalidatePath("/account");
   revalidatePath(`/orders/${orderId}`);
-  redirect("/admin?paymentTestStatus=enabled#shipping");
+  redirect("/admin/shipping?paymentTestStatus=enabled");
 }
 
 export async function configureOrderShipping(formData: FormData) {
@@ -262,16 +262,16 @@ export async function configureOrderShipping(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (typeof orderId !== "string" || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-    redirect("/admin?shippingError=invalid-order#shipping");
+    redirect("/admin/shipping?shippingError=invalid-order");
   }
   if (typeof requestKey !== "string" || !/^[0-9a-f-]{36}$/i.test(requestKey)) {
-    redirect("/admin?shippingError=invalid-request#shipping");
+    redirect("/admin/shipping?shippingError=invalid-request");
   }
   if (shippingAmount === null) {
-    redirect("/admin?shippingError=invalid-amount#shipping");
+    redirect("/admin/shipping?shippingError=invalid-amount");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?shippingError=reason-required#shipping");
+    redirect("/admin/shipping?shippingError=reason-required");
   }
 
   const supabase = await createClient();
@@ -284,13 +284,13 @@ export async function configureOrderShipping(formData: FormData) {
 
   if (error) {
     console.error("Unable to configure order shipping", { code: error.code });
-    redirect("/admin?shippingError=configure-failed#shipping");
+    redirect("/admin/shipping?shippingError=configure-failed");
   }
 
   revalidatePath("/admin");
   revalidatePath("/account");
   revalidatePath(`/orders/${orderId}`);
-  redirect("/admin?shippingStatus=configured#shipping");
+  redirect("/admin/shipping?shippingStatus=configured");
 }
 
 export async function advanceOrderFulfillment(formData: FormData) {
@@ -305,19 +305,19 @@ export async function advanceOrderFulfillment(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (typeof orderId !== "string" || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-    redirect("/admin?fulfillmentError=invalid-order#fulfillment");
+    redirect("/admin/fulfillment?fulfillmentError=invalid-order");
   }
   if (typeof requestKey !== "string" || !/^[0-9a-f-]{36}$/i.test(requestKey)) {
-    redirect("/admin?fulfillmentError=invalid-request#fulfillment");
+    redirect("/admin/fulfillment?fulfillmentError=invalid-request");
   }
   if (action !== "prepare" && action !== "ship") {
-    redirect("/admin?fulfillmentError=invalid-action#fulfillment");
+    redirect("/admin/fulfillment?fulfillmentError=invalid-action");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?fulfillmentError=reason-required#fulfillment");
+    redirect("/admin/fulfillment?fulfillmentError=reason-required");
   }
   if (action === "ship" && (carrier.length < 2 || trackingNumber.length < 3)) {
-    redirect("/admin?fulfillmentError=tracking-required#fulfillment");
+    redirect("/admin/fulfillment?fulfillmentError=tracking-required");
   }
 
   const supabase = await createClient();
@@ -332,13 +332,13 @@ export async function advanceOrderFulfillment(formData: FormData) {
 
   if (error) {
     console.error("Unable to advance order fulfillment", { code: error.code, action });
-    redirect("/admin?fulfillmentError=transition-failed#fulfillment");
+    redirect("/admin/fulfillment?fulfillmentError=transition-failed");
   }
 
   revalidatePath("/admin");
   revalidatePath("/account");
   revalidatePath(`/orders/${orderId}`);
-  redirect(`/admin?fulfillmentStatus=${action === "prepare" ? "preparing" : "shipped"}#fulfillment`);
+  redirect(`/admin/fulfillment?fulfillmentStatus=${action === "prepare" ? "preparing" : "shipped"}`);
 }
 
 export async function reviewPaymentDefaultAccount(formData: FormData) {
@@ -348,13 +348,13 @@ export async function reviewPaymentDefaultAccount(formData: FormData) {
   const reason = typeof reasonValue === "string" ? reasonValue.trim() : "";
 
   if (typeof userId !== "string" || !/^[0-9a-f-]{36}$/i.test(userId)) {
-    redirect("/admin?defaultError=invalid-user#payment-defaults");
+    redirect("/admin/defaults?defaultError=invalid-user");
   }
   if (decision !== "reinstate" && decision !== "keep_suspended") {
-    redirect("/admin?defaultError=invalid-decision#payment-defaults");
+    redirect("/admin/defaults?defaultError=invalid-decision");
   }
   if (reason.length < 5 || reason.length > 500) {
-    redirect("/admin?defaultError=reason-required#payment-defaults");
+    redirect("/admin/defaults?defaultError=reason-required");
   }
 
   const supabase = await createClient();
@@ -366,10 +366,10 @@ export async function reviewPaymentDefaultAccount(formData: FormData) {
 
   if (error) {
     console.error("Unable to review payment default account", { code: error.code, decision });
-    redirect("/admin?defaultError=review-failed#payment-defaults");
+    redirect("/admin/defaults?defaultError=review-failed");
   }
 
   revalidatePath("/admin");
   revalidatePath("/account");
-  redirect(`/admin?defaultStatus=${decision === "reinstate" ? "reinstated" : "kept-suspended"}#payment-defaults`);
+  redirect(`/admin/defaults?defaultStatus=${decision === "reinstate" ? "reinstated" : "kept-suspended"}`);
 }
