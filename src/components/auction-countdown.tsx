@@ -13,7 +13,9 @@ function remaining(endsAt: string, databaseNow: number) {
 
 export function AuctionCountdown({ endsAt }: { endsAt: string }) {
   const { databaseNow, synced } = useDatabaseClock();
-  const [label, setLabel] = useState(() => remaining(endsAt, databaseNow()));
+  // Keep the server and first client render identical. The authoritative
+  // database-clock value is applied immediately after hydration.
+  const [label, setLabel] = useState("--:--:--");
   useEffect(() => {
     const update = () => setLabel(remaining(endsAt, databaseNow()));
     update();
