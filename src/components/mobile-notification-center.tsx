@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { disablePushSubscriptionAction, markAllNotificationsReadAction, markNotificationReadAction, savePushSubscriptionAction } from "@/app/(customer)/notifications/actions";
-import { subscribeToNotifications, type RealtimeChangeEvent } from "@/lib/supabase/realtime";
+import {
+  subscribeToNotifications,
+  type RealtimeChangeEvent,
+  type RealtimeSubscriptionStatus,
+} from "@/lib/supabase/realtime";
 
 export type MobileNotification = {
   id: number;
@@ -43,12 +47,21 @@ function urlBase64ToUint8Array(value: string) {
 }
 
 type PushState = "checking" | "unsupported" | "unavailable" | "prompt" | "active" | "denied" | "error";
+type NotificationRealtimeState = "connecting" | "online" | "offline" | "degraded";
+
+const notificationRealtimeLabels: Record<NotificationRealtimeState, string> = {
+  connecting: "กำลังเชื่อมแจ้งเตือนสด",
+  online: "แจ้งเตือนสดพร้อมใช้งาน",
+  offline: "ออฟไลน์ · จะดึงรายการล่าสุดเมื่ออินเทอร์เน็ตกลับมา",
+  degraded: "Realtime หลุด · กำลังเชื่อมใหม่",
+};
 
 export function MobileNotificationCenter({ userId, initialNotifications, pushDispatchEnabled, vapidPublicKey }: { userId: string; initialNotifications: MobileNotification[]; pushDispatchEnabled: boolean; vapidPublicKey: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(initialNotifications);
   const [liveMessage, setLiveMessage] = useState("");
+  const [realtimeState, setRealtimeState] = useState<NotificationRealtimeState>("connecting");
   const [pushState, setPushState] = useState<PushState>(
     pushDispatchEnabled && vapidPublicKey ? "checking" : "unavailable",
   );
@@ -97,7 +110,25 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
   }, [open]);
 
   useEffect(() => {
-    const channel = subscribeToNotifications(userId, (event: RealtimeChangeEvent) => {
+    let disposed = false;
+    let channel: ReturnType<typeof subscribeToNotifications> | null = null;
+    let reconnectTimer: number | undefined;
+    let connectionWatchdog: number | undefined;
+    let refreshTimer: number | undefined;
+    let connectionGeneration = 0;
+    let reconnectAttempt = 0;
+    let realtimeHealthy = false;
+    let hasSubscribed = false;
+
+    const reconcileNotifications = (delay = 0) => {
+      if (disposed || !navigator.onLine) return;
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        if (!disposed && navigator.onLine) router.refresh();
+      }, delay);
+    };
+
+    const handleCommittedChange = (event: RealtimeChangeEvent) => {
       if (isNotification(event.record)) {
         const incoming = event.record as MobileNotification;
         setItems((current) => {
@@ -106,10 +137,120 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
         });
         if (event.event === "INSERT") setLiveMessage(`มีแจ้งเตือนใหม่: ${incoming.title}`);
       } else {
-        router.refresh();
+        reconcileNotifications(120);
       }
-    });
-    return () => { void channel.unsubscribe(); };
+    };
+
+    const scheduleReconnect = () => {
+      if (disposed || !navigator.onLine) return;
+      window.clearTimeout(reconnectTimer);
+      const delay = Math.min(10_000, 1_500 * 2 ** Math.min(reconnectAttempt, 3));
+      reconnectAttempt += 1;
+      reconnectTimer = window.setTimeout(() => void connectRealtime(), delay);
+    };
+
+    const connectRealtime = async () => {
+      if (disposed || !navigator.onLine) return;
+      const generation = ++connectionGeneration;
+      const previousChannel = channel;
+      channel = null;
+      if (previousChannel) await previousChannel.unsubscribe();
+      if (disposed || generation !== connectionGeneration || !navigator.onLine) return;
+
+      setRealtimeState("connecting");
+      window.clearTimeout(connectionWatchdog);
+      connectionWatchdog = window.setTimeout(() => {
+        if (disposed || generation !== connectionGeneration || realtimeHealthy || !navigator.onLine) return;
+        setRealtimeState("degraded");
+        reconcileNotifications();
+        scheduleReconnect();
+      }, 12_000);
+
+      try {
+        channel = subscribeToNotifications(
+          userId,
+          (event: RealtimeChangeEvent) => {
+            if (!disposed && generation === connectionGeneration) handleCommittedChange(event);
+          },
+          (status: RealtimeSubscriptionStatus) => {
+            if (disposed || generation !== connectionGeneration) return;
+            if (status === "SUBSCRIBED") {
+              const recoveredConnection = hasSubscribed;
+              hasSubscribed = true;
+              realtimeHealthy = true;
+              reconnectAttempt = 0;
+              window.clearTimeout(connectionWatchdog);
+              window.clearTimeout(reconnectTimer);
+              setRealtimeState("online");
+              if (recoveredConnection) reconcileNotifications();
+              return;
+            }
+
+            realtimeHealthy = false;
+            window.clearTimeout(connectionWatchdog);
+            if (!navigator.onLine) {
+              setRealtimeState("offline");
+            } else {
+              setRealtimeState("degraded");
+              reconcileNotifications(500);
+              scheduleReconnect();
+            }
+          },
+        );
+      } catch {
+        if (disposed || generation !== connectionGeneration) return;
+        realtimeHealthy = false;
+        setRealtimeState("degraded");
+        reconcileNotifications(500);
+        scheduleReconnect();
+      }
+    };
+
+    const handleOffline = () => {
+      connectionGeneration += 1;
+      realtimeHealthy = false;
+      window.clearTimeout(reconnectTimer);
+      window.clearTimeout(connectionWatchdog);
+      window.clearTimeout(refreshTimer);
+      const previousChannel = channel;
+      channel = null;
+      if (previousChannel) void previousChannel.unsubscribe();
+      setRealtimeState("offline");
+    };
+    const handleOnline = () => {
+      reconcileNotifications();
+      void connectRealtime();
+    };
+    const reconcileWhenVisible = () => {
+      if (document.visibilityState !== "visible" || !navigator.onLine) return;
+      reconcileNotifications();
+      if (!realtimeHealthy) void connectRealtime();
+    };
+
+    void connectRealtime();
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("focus", reconcileWhenVisible);
+    document.addEventListener("visibilitychange", reconcileWhenVisible);
+    const degradedRefreshTimer = window.setInterval(() => {
+      if (!realtimeHealthy && navigator.onLine && document.visibilityState === "visible") {
+        reconcileNotifications();
+      }
+    }, 30_000);
+
+    return () => {
+      disposed = true;
+      connectionGeneration += 1;
+      window.clearTimeout(reconnectTimer);
+      window.clearTimeout(connectionWatchdog);
+      window.clearTimeout(refreshTimer);
+      window.clearInterval(degradedRefreshTimer);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("focus", reconcileWhenVisible);
+      document.removeEventListener("visibilitychange", reconcileWhenVisible);
+      if (channel) void channel.unsubscribe();
+    };
   }, [router, userId]);
 
   useEffect(() => {
@@ -213,6 +354,7 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
           <div><small>BBK AUCTION</small><h2>การแจ้งเตือน</h2><p>{unreadCount > 0 ? `${unreadCount} รายการใหม่` : "อ่านครบแล้ว"}</p></div>
           <button aria-label="ปิด" onClick={() => setOpen(false)} type="button">×</button>
         </header>
+        <p aria-live="polite" className="notification-realtime-state" data-state={realtimeState}><i />{notificationRealtimeLabels[realtimeState]}</p>
         <section className={`push-opt-in ${pushState}`}>
           <div><strong>แจ้งเตือนบนหน้าจอมือถือ</strong><p>{pushState === "active" ? "เปิดแล้ว · รับการแจ้งเตือนแม้สลับแอปหรือปิดหน้าเว็บ" : pushState === "denied" ? "เบราว์เซอร์ปิดกั้น กรุณาเปิดสิทธิ์การแจ้งเตือนในการตั้งค่ามือถือ" : pushState === "unsupported" ? "เบราว์เซอร์นี้ยังไม่รองรับ Web Push" : pushState === "unavailable" ? "เตรียมระบบแล้ว · รอเชื่อมโดเมนเว็บไซต์จริงก่อนเปิดใช้" : pushState === "error" ? "เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่" : "กดเปิดและอนุญาตบนอุปกรณ์นี้"}</p></div>
           {pushState === "active" ? <button disabled={pushWorking} onClick={disablePush} type="button">ปิด</button> : pushState === "prompt" || pushState === "error" ? <button disabled={pushWorking} onClick={enablePush} type="button">{pushWorking ? "กำลังเปิด…" : "เปิดแจ้งเตือน"}</button> : null}

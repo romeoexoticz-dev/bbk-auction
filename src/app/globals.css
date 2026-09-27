@@ -818,6 +818,12 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .notification-drawer > header h2 { font-family: Georgia, serif; font-size: 29px; font-weight: 450; margin: 6px 0 3px; }
 .notification-drawer > header p { color: #d3ccbf; font-size: 13px; margin: 0; }
 .notification-drawer > header button { align-items: center; background: transparent; border: 1px solid #59564e; border-radius: 50%; color: white; cursor: pointer; display: flex; font-size: 25px; height: 42px; justify-content: center; line-height: 1; width: 42px; }
+.notification-realtime-state { align-items: center; background: #e7f0eb; border-bottom: 1px solid #d1dfd7; color: #356b55; display: flex; font-size: 12px; font-weight: 700; gap: 8px; margin: 0; padding: 9px 18px; }
+.notification-realtime-state i { background: #3d8769; border: 3px solid #cbe1d6; border-radius: 50%; height: 11px; width: 11px; }
+.notification-realtime-state[data-state="connecting"] { background: #f5eedc; border-color: #e8dbb7; color: #7f672d; }
+.notification-realtime-state[data-state="connecting"] i { background: #bd8e2b; border-color: #efe0b8; }
+.notification-realtime-state[data-state="offline"], .notification-realtime-state[data-state="degraded"] { background: #f5e7e2; border-color: #e6d0c8; color: #8b4f43; }
+.notification-realtime-state[data-state="offline"] i, .notification-realtime-state[data-state="degraded"] i { background: #a75a4e; border-color: #ecd4ce; }
 .push-opt-in { align-items: center; background: #eee9df; border-bottom: 1px solid #ded6c6; display: flex; gap: 14px; justify-content: space-between; padding: 14px 18px; }
 .push-opt-in > div { min-width: 0; }
 .push-opt-in strong { display: block; font-size: 14px; }

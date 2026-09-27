@@ -41,6 +41,7 @@ export function subscribeToAuction(
 export function subscribeToNotifications(
   userId: string,
   onCommittedChange: (event: RealtimeChangeEvent) => void,
+  onStatus?: RealtimeStatusHandler,
 ): RealtimeChannel {
   const supabase = createClient();
 
@@ -49,5 +50,7 @@ export function subscribeToNotifications(
     .on("broadcast", { event: "*" }, ({ payload }) => {
       onCommittedChange(payload as RealtimeChangeEvent);
     })
-    .subscribe();
+    .subscribe((status, error) => {
+      onStatus?.(status, error);
+    });
 }
