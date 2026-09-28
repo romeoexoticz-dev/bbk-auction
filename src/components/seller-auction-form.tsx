@@ -1,9 +1,21 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { createAuctionDraft, updateAuctionDraft, type CreateAuctionState } from "@/app/seller/actions";
+import { createClient } from "@/lib/supabase/client";
 
 const initialState: CreateAuctionState = {};
+const imageTypes = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/png", "png"],
+  ["image/webp", "webp"],
+]);
+
+async function checksumSha256(file: File) {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join("");
+}
 
 function localDateTime(daysFromNow: number, hour: number) {
   const date = new Date();
@@ -29,8 +41,114 @@ export type EditableAuction = {
 };
 
 export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAuction }) {
+  const router = useRouter();
   const editMode = Boolean(editAuction);
-  const [state, action, pending] = useActionState(editMode ? updateAuctionDraft : createAuctionDraft, initialState);
+  const [editState, editAction, editPending] = useActionState(updateAuctionDraft, initialState);
+  const [createState, setCreateState] = useState<CreateAuctionState>(initialState);
+  const [createPending, startCreateTransition] = useTransition();
+  const state = editMode ? editState : createState;
+  const pending = editMode ? editPending : createPending;
+
+  function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const fullData = new FormData(form);
+    const requiredImages = [
+      { kind: "front", value: fullData.get("frontImage") },
+      { kind: "back", value: fullData.get("backImage") },
+      { kind: "defect", value: fullData.get("defectImage") },
+    ].map(({ kind, value }) => ({ kind, file: value instanceof File && value.size > 0 ? value : null }));
+    if (requiredImages.some(({ file }) => !file)) {
+      setCreateState({ error: "กรุณาใส่รูปด้านหน้า ด้านหลัง และตำหนิสำคัญให้ครบ" });
+      return;
+    }
+
+    const galleryImages = fullData
+      .getAll("galleryImages")
+      .filter((value): value is File => value instanceof File && value.size > 0);
+    if (galleryImages.length > 2) {
+      setCreateState({ error: "รูปเพิ่มเติมใส่ได้ไม่เกิน 2 รูป" });
+      return;
+    }
+    const images = [
+      ...requiredImages.map(({ kind, file }) => ({ kind, file: file! })),
+      ...galleryImages.map((file) => ({ kind: "gallery", file })),
+    ];
+    for (const { file } of images) {
+      if (!imageTypes.has(file.type)) {
+        setCreateState({ error: "รองรับเฉพาะรูป JPG, PNG และ WebP" });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setCreateState({ error: "แต่ละรูปต้องมีขนาดไม่เกิน 10 MB" });
+        return;
+      }
+    }
+
+    const fields = new FormData(form);
+    fields.delete("frontImage");
+    fields.delete("backImage");
+    fields.delete("defectImage");
+    fields.delete("galleryImages");
+    setCreateState({});
+
+    startCreateTransition(async () => {
+      const draft = await createAuctionDraft(initialState, fields);
+      if (draft.error || !draft.auctionId) {
+        setCreateState(draft);
+        return;
+      }
+
+      const supabase = createClient();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        setCreateState({ ...draft, warning: "สร้างฉบับร่างแล้ว แต่เซสชันหมดอายุก่อนอัปโหลดรูป กรุณาเข้าสู่ระบบใหม่" });
+        return;
+      }
+
+      let uploadedCount = 0;
+      for (const [position, { kind, file }] of images.entries()) {
+        const extension = imageTypes.get(file.type)!;
+        const objectPath = `${userData.user.id}/${draft.auctionId}/${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await supabase.storage
+          .from("auction-media")
+          .upload(objectPath, file, { contentType: file.type, upsert: false });
+
+        if (uploadError) {
+          console.error("Unable to upload auction media", { auctionId: draft.auctionId, position, kind, code: uploadError.name });
+          setCreateState({ ...draft, warning: `สร้างฉบับร่างแล้ว แต่อัปโหลดรูปสำเร็จ ${uploadedCount}/${images.length} รูป` });
+          router.refresh();
+          return;
+        }
+
+        const { error: metadataError } = await supabase.from("auction_media").insert({
+          auction_id: draft.auctionId,
+          owner_id: userData.user.id,
+          object_path: objectPath,
+          media_kind: kind,
+          position,
+          mime_type: file.type,
+          byte_size: file.size,
+          checksum_sha256: await checksumSha256(file),
+        });
+        if (metadataError) {
+          console.error("Unable to register auction media", { auctionId: draft.auctionId, position, kind, code: metadataError.code });
+          await supabase.storage.from("auction-media").remove([objectPath]);
+          setCreateState({ ...draft, warning: `สร้างฉบับร่างแล้ว แต่บันทึกรูปสำเร็จ ${uploadedCount}/${images.length} รูป` });
+          router.refresh();
+          return;
+        }
+        uploadedCount += 1;
+      }
+
+      setCreateState({
+        success: "บันทึกฉบับร่างและอัปโหลดรูปครบแล้ว ยังไม่แสดงหน้าลูกค้าจนกว่าแอดมินจะกดเปิด",
+        auctionId: draft.auctionId,
+      });
+      form.reset();
+      router.refresh();
+    });
+  }
 
   return (
     <section className="panel seller-create-panel" id={editMode ? "edit" : "new"}>
@@ -38,7 +156,7 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
         <div><h2>{editMode ? "แก้ไขรายการประมูล" : "สร้างรายการประมูลใหม่"}</h2><p>{editMode ? "แก้ข้อมูลสินค้าให้ครบ แล้วบันทึกก่อนเปิดประมูล" : "ระบบจะเก็บเป็นฉบับร่างจนกว่าแอดมินจะกดเปิด"}</p></div>
         <span className="status-pill"><i />{editMode ? "กำลังแก้ไข" : "ฉบับร่างเท่านั้น"}</span>
       </div>
-      <form action={action} className="seller-form">
+      <form action={editMode ? editAction : undefined} className="seller-form" onSubmit={editMode ? undefined : handleCreateSubmit}>
         {editAuction && <input name="auctionId" type="hidden" value={editAuction.id} />}
         <div className="seller-form-grid">
           <label className="wide">ชื่อรายการ

@@ -1,6 +1,5 @@
 "use server";
 
-import { createHash, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -19,12 +18,6 @@ const categories = new Set([
   "พระเครื่อง",
   "การ์ดสะสม",
   "ของเก่า",
-]);
-
-const imageTypes = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
 ]);
 
 function textField(formData: FormData, name: string) {
@@ -100,32 +93,7 @@ export async function createAuctionDraft(
   const trustError = validateProductTrust(trust);
   if (trustError) return { error: trustError };
 
-  const requiredImages = [
-    { kind: "front", value: formData.get("frontImage") },
-    { kind: "back", value: formData.get("backImage") },
-    { kind: "defect", value: formData.get("defectImage") },
-  ].map(({ kind, value }) => ({ kind, file: value instanceof File && value.size > 0 ? value : null }));
-  if (requiredImages.some(({ file }) => !file)) return { error: "กรุณาใส่รูปด้านหน้า ด้านหลัง และตำหนิสำคัญให้ครบ" };
-
-  const galleryImages = formData
-    .getAll("galleryImages")
-    .filter((value): value is File => value instanceof File && value.size > 0);
-  if (galleryImages.length > 2) return { error: "รูปเพิ่มเติมใส่ได้ไม่เกิน 2 รูป" };
-  const images = [
-    ...requiredImages.map(({ kind, file }) => ({ kind, file: file! })),
-    ...galleryImages.map((file) => ({ kind: "gallery", file })),
-  ];
-
-  if (images.length > 5) return { error: "อัปโหลดรูปได้ไม่เกิน 5 รูปต่อรายการ" };
-  for (const { file: image } of images) {
-    if (!imageTypes.has(image.type)) return { error: "รองรับเฉพาะรูป JPG, PNG และ WebP" };
-    if (image.size > 10 * 1024 * 1024) return { error: "แต่ละรูปต้องมีขนาดไม่เกิน 10 MB" };
-  }
-
   const supabase = await createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) return { error: "กรุณาเข้าสู่ระบบใหม่" };
-
   const { data, error } = await supabase.rpc("create_auction_draft_with_details", {
     p_title: title,
     p_description: description,
@@ -149,66 +117,9 @@ export async function createAuctionDraft(
   const row = (Array.isArray(data) ? data[0] : data) as { id?: string };
   if (!row?.id) return { error: "สร้างฉบับร่างแล้ว แต่ไม่พบเลขรายการ กรุณาติดต่อแอดมิน" };
 
-  const uploadedPaths: string[] = [];
-  let mediaWarning: string | undefined;
-
-  for (const [position, { kind, file: image }] of images.entries()) {
-    const extension = imageTypes.get(image.type)!;
-    const objectPath = `${userData.user.id}/${row.id}/${randomUUID()}.${extension}`;
-    const bytes = Buffer.from(await image.arrayBuffer());
-    const checksum = createHash("sha256").update(bytes).digest("hex");
-    const { error: uploadError } = await supabase.storage
-      .from("auction-media")
-      .upload(objectPath, bytes, { contentType: image.type, upsert: false });
-
-    if (uploadError) {
-      console.error("Unable to upload auction media", {
-        auctionId: row.id,
-        position,
-        kind,
-        code: uploadError.name,
-        message: uploadError.message,
-      });
-      mediaWarning = "บันทึกฉบับร่างแล้ว แต่มีรูปบางรูปอัปโหลดไม่สำเร็จ";
-      break;
-    }
-
-    uploadedPaths.push(objectPath);
-    const { error: metadataError } = await supabase.from("auction_media").insert({
-      auction_id: row.id,
-      owner_id: userData.user.id,
-      object_path: objectPath,
-      media_kind: kind,
-      position,
-      mime_type: image.type,
-      byte_size: image.size,
-      checksum_sha256: checksum,
-    });
-
-    if (metadataError) {
-      console.error("Unable to register auction media", {
-        auctionId: row.id,
-        position,
-        kind,
-        code: metadataError.code,
-        message: metadataError.message,
-      });
-      await supabase.storage.from("auction-media").remove([objectPath]);
-      uploadedPaths.pop();
-      mediaWarning = "บันทึกฉบับร่างแล้ว แต่มีรูปบางรูปบันทึกไม่สำเร็จ";
-      break;
-    }
-  }
-
-  if (mediaWarning && uploadedPaths.length > 0) {
-    // Keep successfully registered media; the draft remains editable and unpublished.
-    console.warn("Auction draft has partial media", { auctionId: row.id, uploaded: uploadedPaths.length });
-  }
-
   revalidatePath("/seller");
   return {
-    success: "บันทึกรายการเป็นฉบับร่างแล้ว ยังไม่แสดงหน้าลูกค้าจนกว่าแอดมินจะกดเปิด",
-    warning: mediaWarning,
+    success: "สร้างฉบับร่างแล้ว กำลังอัปโหลดรูปตรงไปยังพื้นที่จัดเก็บ",
     auctionId: row.id,
   };
 }
