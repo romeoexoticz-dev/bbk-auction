@@ -1,13 +1,13 @@
 "use client";
 
 import { type MouseEvent, useActionState, useState } from "react";
-import { requestPasswordReset, signIn, signUp, type AuthActionState, type PasswordResetState } from "@/app/auth/actions";
+import { requestPasswordReset, signIn, signInWithGoogle, signUp, type AuthActionState, type PasswordResetState } from "@/app/auth/actions";
 import { EmailConfirmationMessage } from "@/components/email-confirmation-message";
 
 const initialState: AuthActionState = {};
 const initialResetState: PasswordResetState = {};
 
-export function AuthForm({ nextPath }: { nextPath: string }) {
+export function AuthForm({ googleEnabled, nextPath }: { googleEnabled: boolean; nextPath: string }) {
   const [mode, setMode] = useState<"sign-in" | "sign-up" | "forgot-password">("sign-in");
   const [signInState, signInAction, signInPending] = useActionState(signIn, initialState);
   const [signUpState, signUpAction, signUpPending] = useActionState(signUp, initialState);
@@ -22,6 +22,16 @@ export function AuthForm({ nextPath }: { nextPath: string }) {
 
   return (
     <div className="auth-card">
+      {googleEnabled && mode !== "forgot-password" && <>
+        <form action={signInWithGoogle}>
+          <input name="next" type="hidden" value={nextPath} />
+          <button className="auth-google" type="submit">
+            <span aria-hidden="true">G</span>
+            ดำเนินการต่อด้วย Google
+          </button>
+        </form>
+        <div className="auth-divider"><span>หรือใช้อีเมล</span></div>
+      </>}
       {mode !== "forgot-password" && <div className="auth-tabs" role="tablist" aria-label="เลือกรูปแบบบัญชี">
         <button className={mode === "sign-in" ? "active" : ""} onClick={() => setMode("sign-in")} role="tab" type="button">เข้าสู่ระบบ</button>
         <button className={mode === "sign-up" ? "active" : ""} onClick={() => setMode("sign-up")} role="tab" type="button">สมัครสมาชิก</button>
@@ -41,7 +51,7 @@ export function AuthForm({ nextPath }: { nextPath: string }) {
       </form>
       {mode === "sign-in" && <button className="auth-text-action" onClick={() => setMode("forgot-password")} type="button">ลืมรหัสผ่าน?</button>}
       {mode === "forgot-password" && <button className="auth-text-action" onClick={() => setMode("sign-in")} type="button">← กลับไปเข้าสู่ระบบ</button>}
-      <p className="auth-footnote">บัญชีใหม่เป็นบัญชีผู้ประมูล ต้องยืนยันอีเมลก่อนวางราคา ขณะนี้ยังไม่เปิดรับสมัครผู้ขายภายนอก</p>
+      <p className="auth-footnote">บัญชีอีเมลต้องยืนยันอีเมลก่อนใช้งาน และทุกบัญชียังต้องได้รับอนุมัติผู้ประมูลก่อนวางราคา ขณะนี้ยังไม่เปิดรับสมัครผู้ขายภายนอก</p>
     </div>
   );
 }

@@ -17,7 +17,9 @@ export default async function SignInPage({
   const nextPath = typeof params.next === "string" && params.next.startsWith("/") ? params.next : "/";
   const checkEmail = params.status === "check-email";
   const callbackError = params.error === "callback";
+  const providerError = params.error === "provider";
   const recoveryExpired = params.error === "recovery-expired";
+  const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
   const user = await getCurrentUser();
 
   if (user) redirect(nextPath);
@@ -36,8 +38,9 @@ export default async function SignInPage({
         <div><span className="dash-kicker">ยินดีต้อนรับ</span><h2>จัดการบัญชีของคุณ</h2><p>ใช้ Supabase Auth และ session แบบ cookie</p></div>
         {checkEmail && <EmailConfirmationMessage />}
         {callbackError && <div className="auth-message auth-warning">ลิงก์ยืนยันไม่สำเร็จหรือหมดอายุ กรุณาลองใหม่อีกครั้ง</div>}
+        {providerError && <div className="auth-message auth-warning">ยังเข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่หรือติดต่อแอดมิน</div>}
         {recoveryExpired && <div className="auth-message auth-warning">ลิงก์ตั้งรหัสผ่านหมดอายุหรือถูกเปิดคนละเบราว์เซอร์ กรุณากด “ลืมรหัสผ่าน?” เพื่อขอลิงก์ใหม่</div>}
-        <AuthForm nextPath={nextPath} />
+        <AuthForm googleEnabled={googleEnabled} nextPath={nextPath} />
       </section>
     </main>
   );

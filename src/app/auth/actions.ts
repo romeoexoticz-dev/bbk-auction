@@ -74,6 +74,32 @@ export async function signIn(
   redirect(safeNextPath(formData.get("next")));
 }
 
+export async function signInWithGoogle(formData: FormData) {
+  if (!isSupabaseConfigured()) {
+    redirect("/auth/sign-in?error=provider");
+  }
+
+  const next = safeNextPath(formData.get("next"));
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const callbackUrl = new URL("/auth/callback", appUrl);
+  callbackUrl.searchParams.set("next", next);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: callbackUrl.toString(),
+      scopes: "openid email profile",
+    },
+  });
+
+  if (error || !data.url) {
+    redirect("/auth/sign-in?error=provider");
+  }
+
+  redirect(data.url);
+}
+
 export async function signUp(
   _state: AuthActionState,
   formData: FormData,
