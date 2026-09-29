@@ -660,6 +660,7 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
 .account-hero { background: linear-gradient(120deg, #25241f, #3b362b); color: white; padding: 44px clamp(24px, 7vw, 100px); }
 .account-hero h1 { font-family: Georgia, serif; font-size: clamp(34px, 5vw, 54px); font-weight: 450; letter-spacing: -.04em; margin: 13px 0 7px; }
 .account-hero p { color: #bbb4a6; font-size: 10px; margin: 0; }
+.account-mobile-home { display: none; }
 .account-system-message { border: 1px solid; margin: 20px clamp(22px, 7vw, 100px) 0; padding: 14px 18px; }
 .account-system-message strong { display: block; font-size: 11px; }
 .account-system-message p { font-size: 9px; line-height: 1.7; margin: 5px 0 0; }
@@ -937,6 +938,30 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   .customer-mobile-nav a > svg { fill: none; height: 24px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 24px; }
   .customer-mobile-nav a > small { font-size: 8px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .customer-mobile-nav a.active { color: #9b6f22; }
+  .account-mobile-home { display: block; margin: 14px auto 22px; padding: 0 14px; }
+  .account-mobile-profile { align-items: center; background: linear-gradient(135deg, #fffdf7, #f3ead5); border: 1px solid #dfd3ba; border-radius: 18px; box-shadow: 0 10px 30px rgba(45,35,18,.08); display: grid; gap: 13px; grid-template-columns: 54px minmax(0, 1fr) 32px; padding: 16px; }
+  .account-mobile-avatar { align-items: center; background: linear-gradient(145deg, #d4aa52, #8e641f); border: 3px solid #f4e6bf; border-radius: 50%; color: white; display: flex; font-size: 23px; font-weight: 850; height: 54px; justify-content: center; width: 54px; }
+  .account-mobile-profile > div { display: flex; flex-direction: column; min-width: 0; }
+  .account-mobile-profile strong { font-size: 17px; line-height: 1.25; }
+  .account-mobile-profile span:not(.account-mobile-avatar) { color: #635e54; font-size: 13px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account-mobile-profile small { color: #34705a; font-size: 11px; font-weight: 800; margin-top: 6px; }
+  .account-mobile-profile > a { align-items: center; border: 1px solid #d8c8a8; border-radius: 50%; color: #836024; display: flex; font-family: Arial, sans-serif; font-size: 27px; height: 32px; justify-content: center; width: 32px; }
+  .account-mobile-menu-card { background: white; border: 1px solid #e0dacf; border-radius: 18px; box-shadow: 0 10px 30px rgba(45,35,18,.06); display: flex; flex-direction: column; margin-top: 13px; overflow: hidden; }
+  .account-mobile-menu-card > a { align-items: center; border-bottom: 1px solid #eee9df; display: grid; gap: 12px; grid-template-columns: 38px minmax(0, 1fr) auto 18px; min-height: 67px; padding: 10px 14px; }
+  .account-mobile-menu-card > a:last-child { border-bottom: 0; }
+  .account-mobile-menu-card i { align-items: center; background: #f3eee3; border-radius: 11px; color: #8c6828; display: flex; font-family: Arial, sans-serif; font-size: 20px; font-style: normal; font-weight: 700; height: 38px; justify-content: center; width: 38px; }
+  .account-mobile-menu-card a > span { display: flex; flex-direction: column; min-width: 0; }
+  .account-mobile-menu-card strong { font-size: 15px; line-height: 1.3; }
+  .account-mobile-menu-card small { color: #817b70; font-size: 11px; line-height: 1.35; margin-top: 3px; }
+  .account-mobile-menu-card em { align-items: center; background: #eee9df; border-radius: 999px; color: #665f54; display: flex; font-size: 11px; font-style: normal; font-weight: 800; height: 25px; justify-content: center; min-width: 25px; padding: 0 7px; }
+  .account-mobile-menu-card em.new { background: #b7372f; color: white; }
+  .account-mobile-menu-card b { color: #aca394; font-family: Arial, sans-serif; font-size: 23px; font-weight: 400; text-align: right; }
+  .account-mobile-menu-card a > b { grid-column: 4; }
+  .account-mobile-signout { margin-top: 13px; }
+  .account-mobile-signout button { align-items: center; background: #fff8f6; border: 1px solid #dfbdb6; border-radius: 15px; color: #9a4438; cursor: pointer; display: flex; font-size: 15px; font-weight: 850; gap: 10px; justify-content: center; min-height: 54px; width: 100%; }
+  .account-mobile-signout button span { font-family: Arial, sans-serif; font-size: 21px; }
+  .account-mobile-home + .account-wide { margin-top: 0; }
+  .account-auction-column, .account-mobile-menu-card > a, .interest-panel, #notifications, #bid-history { scroll-margin-top: 86px; }
   .mobile-auction-cta { align-items: center; background: #fff; border-top: 1px solid #ddd6c9; bottom: 0; box-shadow: 0 -10px 30px rgba(33,27,17,.12); display: flex; gap: 16px; justify-content: space-between; left: 0; min-height: calc(72px + env(safe-area-inset-bottom)); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); position: fixed; right: 0; z-index: 91; }
   .mobile-auction-cta span { color: #777168; font-size: 9px; }
   .mobile-auction-cta strong { align-items: center; background: var(--gold); border-radius: 12px; color: #fff; display: flex; font-size: 13px; justify-content: center; min-height: 48px; padding: 0 28px; }
@@ -1052,7 +1077,9 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   .interest-option { min-height: 76px; }
   .interest-actions { align-items: stretch; flex-direction: column; gap: 14px; }
   .interest-actions .button { width: 100%; }
-  .account-hero { padding-left: 22px; padding-right: 22px; }
+  .account-hero { padding: 22px 18px 20px; }
+  .account-hero h1 { font-size: 30px; margin: 7px 0 2px; }
+  .account-hero p { display: none; }
   .bid-history-panel { margin: 14px 14px 44px; }
   .account-list-row { align-items: flex-start; }
   .account-list-row > div:last-child { align-items: flex-end; }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { signOut } from "@/app/auth/actions";
 import { AuctionInterestForm } from "@/components/auction-interest-form";
 import { Brand } from "@/components/brand";
 import { formatBaht } from "@/lib/auctions/queries";
@@ -172,6 +173,9 @@ export default async function AccountPage({
     .filter((auction) => (auction.status === "ended" || auction.status === "settled") && !wonAuctionIds.has(auction.auctionId))
     .sort((a, b) => new Date(b.endsAt).getTime() - new Date(a.endsAt).getTime());
   const recentBids = bids.slice(0, 30);
+  const unreadNotificationCount = notifications.filter((item) => !item.read_at).length;
+  const accountStatusLabel = accountStatus === "active" ? "ใช้งานอยู่" : accountStatus === "suspended" ? "ถูกระงับ" : accountStatus;
+  const accountInitial = (user.email?.trim().charAt(0) || "B").toUpperCase();
 
   return (
     <main className="account-page">
@@ -181,25 +185,46 @@ export default async function AccountPage({
       {paymentDefault?.review_status === "warning" && <div className="account-system-message warning"><strong>คำเตือนการไม่ชำระครั้งที่ {paymentDefault.strike_count}</strong><p>Order ที่เลยกำหนดถูกยกเลิกแล้ว หากเกิดครั้งที่ 2 ระบบจะระงับสิทธิ์ประมูลเพื่อให้แอดมินตรวจสอบ</p></div>}
       {accountStatus === "suspended" && paymentDefault?.review_status === "pending_review" && <div className="account-system-message danger"><strong>ระงับสิทธิ์ประมูลชั่วคราว</strong><p>พบการไม่ชำระภายในกำหนด {paymentDefault.strike_count} ครั้ง กรุณารอแอดมินตรวจสอบบัญชี</p></div>}
       {paymentDefault?.review_status === "kept_suspended" && <div className="account-system-message danger"><strong>บัญชียังคงถูกระงับ</strong><p>{paymentDefault.review_reason || "กรุณาติดต่อทีมงานเพื่อขอตรวจสอบข้อมูล"}</p></div>}
+      <section aria-label="เมนูบัญชีบนมือถือ" className="account-mobile-home">
+        <div className="account-mobile-profile">
+          <span aria-hidden="true" className="account-mobile-avatar">{accountInitial}</span>
+          <div><strong>บัญชี BBK ของฉัน</strong><span>{user.email ?? "บัญชีสมาชิก"}</span><small>สถานะบัญชี: {accountStatusLabel}</small></div>
+          <Link aria-label="ตรวจสถานะบัญชี" href="/account/verification">›</Link>
+        </div>
+        <nav aria-label="ทางลัดบัญชี" className="account-mobile-menu-card">
+          <Link href="/account/verification"><i aria-hidden="true">✓</i><span><strong>สถานะและสิทธิ์ประมูล</strong><small>ตรวจการยืนยันบัญชีของคุณ</small></span><b aria-hidden="true">›</b></Link>
+          <Link href="#interests"><i aria-hidden="true">♡</i><span><strong>สิ่งที่อยากประมูล</strong><small>เลือกหมวดเพื่อแจ้งความสนใจให้ร้าน</small></span><em>{selectedInterests.length || "–"}</em><b aria-hidden="true">›</b></Link>
+          <Link href="#bidding"><i aria-hidden="true">↗</i><span><strong>กำลังประมูล</strong><small>รายการที่ยังเปิดรับราคา</small></span><em>{activeAuctions.length}</em><b aria-hidden="true">›</b></Link>
+          <Link href="#won"><i aria-hidden="true">★</i><span><strong>รายการที่ชนะ</strong><small>ออเดอร์และยอดที่ต้องดำเนินการ</small></span><em>{orders.length}</em><b aria-hidden="true">›</b></Link>
+          <Link href="#lost"><i aria-hidden="true">×</i><span><strong>รายการที่ไม่ชนะ</strong><small>ประวัติรายการที่ปิดแล้ว</small></span><em>{lostAuctions.length}</em><b aria-hidden="true">›</b></Link>
+          <Link href="#notifications"><i aria-hidden="true">♢</i><span><strong>การแจ้งเตือน</strong><small>ราคาสูงกว่า ผลประมูล และสถานะออเดอร์</small></span>{unreadNotificationCount > 0 && <em className="new">{unreadNotificationCount}</em>}<b aria-hidden="true">›</b></Link>
+          <Link href="#bid-history"><i aria-hidden="true">↻</i><span><strong>ประวัติการเสนอราคา</strong><small>ตรวจวันเวลาและจำนวนเงินย้อนหลัง</small></span><b aria-hidden="true">›</b></Link>
+          <Link href="/auction-rules"><i aria-hidden="true">§</i><span><strong>กติกาการประมูล</strong><small>ค่าธรรมเนียม การชำระ และข้อกำหนด</small></span><b aria-hidden="true">›</b></Link>
+          <Link href="/fraud-warning"><i aria-hidden="true">!</i><span><strong>เตือนช่องปลอมและมิจฉาชีพ</strong><small>ตรวจช่องทางทางการก่อนโอนเงิน</small></span><b aria-hidden="true">›</b></Link>
+        </nav>
+        <form action={signOut} className="account-mobile-signout">
+          <button type="submit"><span aria-hidden="true">↪</span>ออกจากระบบ</button>
+        </form>
+      </section>
       <div className="account-wide"><AuctionInterestForm selected={selectedInterests} /></div>
-      <section className="account-auction-overview account-wide" aria-labelledby="my-auctions-title">
+      <section className="account-auction-overview account-wide" aria-labelledby="my-auctions-title" id="my-auctions">
         <div className="account-auction-overview-heading"><div><span className="section-label">MY AUCTIONS</span><h2 id="my-auctions-title">การประมูลของฉัน</h2><p>แยกตามสถานะล่าสุดจากฐานข้อมูล</p></div></div>
         <div className="account-auction-columns">
-          <section className="panel account-auction-column bidding-now">
+          <section className="panel account-auction-column bidding-now" id="bidding">
             <div className="panel-heading"><div><h3>กำลังประมูล</h3><p>รายการที่ยังเปิดรับราคา</p></div><span className="table-filter">{activeAuctions.length}</span></div>
             {activeAuctions.length > 0 ? <div className="account-list">{activeAuctions.map((auction) => <Link href={`/auctions/${auction.auctionId}`} key={auction.auctionId} className="account-list-row auction-status-row">
               <div><small>ปิด {dateTime(auction.endsAt)}</small><strong>{auction.title}</strong><span>ราคาของคุณ {formatBaht(auction.highestOwnBid)} · {auction.bidCount} ครั้ง</span></div>
               <div><strong>{formatBaht(auction.currentPrice)}</strong><span className={auction.highestOwnBid >= auction.currentPrice ? "auction-position leading" : "auction-position outbid"}>{auction.highestOwnBid >= auction.currentPrice ? "นำอยู่" : "มีราคาสูงกว่า"}</span></div>
             </Link>)}</div> : <div className="account-auction-empty"><strong>ยังไม่มีรายการที่กำลังประมูล</strong><p>รายการจะย้ายมาที่นี่หลังเสนอราคาสำเร็จ</p></div>}
           </section>
-          <section className="panel account-auction-column won">
+          <section className="panel account-auction-column won" id="won">
             <div className="panel-heading"><div><h3>ชนะ</h3><p>รายการที่สร้างคำสั่งซื้อแล้ว</p></div><span className="table-filter">{orders.length}</span></div>
             {orders.length > 0 ? <div className="account-list">{orders.map((order) => <Link href={`/orders/${order.id}`} key={order.id} className="account-list-row auction-status-row">
               <div><small>{order.order_number}</small><strong>{relationTitle(order.auctions)}</strong><span>ครบกำหนด {dateTime(order.payment_due_at)}</span></div>
               <div><strong>{formatBaht(Number(order.total_amount))}</strong><span className="auction-position won">{statusLabel[order.status] ?? order.status}</span></div>
             </Link>)}</div> : <div className="account-auction-empty"><strong>ยังไม่มีรายการที่ชนะ</strong><p>เมื่อชนะ ระบบจะสร้างคำสั่งซื้อให้อัตโนมัติ</p></div>}
           </section>
-          <section className="panel account-auction-column lost">
+          <section className="panel account-auction-column lost" id="lost">
             <div className="panel-heading"><div><h3>ไม่ชนะ</h3><p>รายการที่ปิดแล้วและไม่ได้สินค้า</p></div><span className="table-filter">{lostAuctions.length}</span></div>
             {lostAuctions.length > 0 ? <div className="account-list">{lostAuctions.map((auction) => <Link href={`/auctions/${auction.auctionId}`} key={auction.auctionId} className="account-list-row auction-status-row">
               <div><small>ปิด {dateTime(auction.endsAt)}</small><strong>{auction.title}</strong><span>ราคาสูงสุดของคุณ {formatBaht(auction.highestOwnBid)}</span></div>
@@ -216,7 +241,7 @@ export default async function AccountPage({
           </article>)}</div> : <div className="admin-empty"><p>ยังไม่มีการแจ้งเตือน</p></div>}
         </section>
       </div>
-      <section className="panel account-panel bid-history-panel">
+      <section className="panel account-panel bid-history-panel" id="bid-history">
         <div className="panel-heading"><div><h2>ประวัติการเสนอราคา</h2><p>30 ครั้งล่าสุด แสดงเวลาและจำนวนเงินจากฐานข้อมูล</p></div><span className="table-filter">{recentBids.length}</span></div>
         {recentBids.length > 0 ? <div className="account-list">{recentBids.map((bid) => <Link href={`/auctions/${bid.auction_id}`} key={bid.id} className="account-list-row">
           <div><small>{dateTime(bid.created_at)}</small><strong>{relationTitle(bid.auctions)}</strong></div><div><strong>{formatBaht(Number(bid.amount))}</strong><span>ดูรายการ →</span></div>
