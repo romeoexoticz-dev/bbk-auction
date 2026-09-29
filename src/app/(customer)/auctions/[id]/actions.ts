@@ -27,6 +27,7 @@ function friendlyBidError(code: string, retryAfterSeconds?: number) {
   if (code.includes("SELF_BIDDING_FORBIDDEN")) return "ผู้ขายวางประมูลรายการของตนเองไม่ได้";
   if (code.includes("AUCTION_NOT_LIVE") || code.includes("OUTSIDE_BIDDING_WINDOW")) return "รายการนี้ไม่ได้อยู่ในช่วงรับประมูลแล้ว";
   if (code.includes("BID_BELOW_MINIMUM")) return "ราคาต่ำกว่าขั้นต่ำล่าสุด กรุณาโหลดข้อมูลใหม่";
+  if (code.includes("ALREADY_HIGHEST_BIDDER")) return "คุณเป็นผู้เสนอราคาสูงสุดอยู่แล้ว กรุณารอให้มีผู้อื่นเสนอราคาสูงกว่าก่อน";
   if (code.includes("IDEMPOTENCY_KEY_REUSED")) return "คำขอนี้ถูกใช้แล้ว กรุณาโหลดหน้าใหม่";
   if (code.includes("BID_RATE_LIMIT_SHORT")) return `กดเร็วเกินไป กรุณารอ ${Math.max(1, retryAfterSeconds ?? 2)} วินาทีแล้วลองใหม่`;
   if (code.includes("BID_RATE_LIMIT_MINUTE")) return `กดครบ 10 ครั้งต่อนาทีแล้ว กรุณารอ ${Math.max(1, retryAfterSeconds ?? 60)} วินาที`;
