@@ -26,6 +26,7 @@ export type AuctionView = {
   itemSize: string;
   conditionSummary: string;
   expertNotes: string;
+  primaryImageUrl?: string;
 };
 
 export type AuctionMediaView = {
@@ -125,6 +126,56 @@ function mapAuction(row: Record<string, unknown>): AuctionView {
   };
 }
 
+async function attachPrimaryImages(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  auctions: AuctionView[],
+) {
+  if (!auctions.length) return auctions;
+
+  const { data, error } = await supabase
+    .from("auction_media")
+    .select("auction_id,object_path,media_kind,position")
+    .in("auction_id", auctions.map((auction) => auction.id))
+    .in("media_kind", ["cover", "front"])
+    .order("position", { ascending: true });
+
+  if (error || !data?.length) return auctions;
+
+  const primaryByAuction = new Map<string, { kind: string; path: string; position: number }>();
+  for (const item of data) {
+    const auctionId = String(item.auction_id);
+    const candidate = {
+      kind: String(item.media_kind),
+      path: String(item.object_path),
+      position: Number(item.position),
+    };
+    const current = primaryByAuction.get(auctionId);
+    const candidateRank = candidate.kind === "cover" ? 0 : 1;
+    const currentRank = current?.kind === "cover" ? 0 : 1;
+    if (!current || candidateRank < currentRank || (candidateRank === currentRank && candidate.position < current.position)) {
+      primaryByAuction.set(auctionId, candidate);
+    }
+  }
+
+  const paths = [...new Set([...primaryByAuction.values()].map((item) => item.path))];
+  const { data: signed, error: signedError } = await supabase.storage
+    .from("auction-media")
+    .createSignedUrls(paths, 3600);
+  if (signedError || !signed?.length) return auctions;
+
+  const signedByPath = new Map(
+    signed
+      .filter((item) => item.signedUrl)
+      .map((item) => [String(item.path), String(item.signedUrl)]),
+  );
+
+  return auctions.map((auction) => {
+    const primary = primaryByAuction.get(auction.id);
+    const primaryImageUrl = primary ? signedByPath.get(primary.path) : undefined;
+    return primaryImageUrl ? { ...auction, primaryImageUrl } : auction;
+  });
+}
+
 const selection = "id,title,description,category,status,opening_price,current_price,min_increment,buyer_fee_rate_bps,buyer_fee_vat_rate_bps,bid_count,starts_at,ends_at,extension_window_seconds,extension_duration_seconds,version";
 const trustSelection = `${selection},item_year,item_model,item_size,condition_summary,expert_notes`;
 
@@ -174,7 +225,8 @@ export async function getFeaturedAuctions(filters: MarketplaceAuctionFilters = {
 
   if (!error) {
     const total = count ?? 0;
-    return { auctions: (data ?? []).map((row) => mapAuction(row)), isDemo: false, total, page: normalized.page, pageSize: normalized.pageSize, totalPages: Math.ceil(total / normalized.pageSize), query: normalized.query, category: normalized.category };
+    const auctions = await attachPrimaryImages(supabase, (data ?? []).map((row) => mapAuction(row)));
+    return { auctions, isDemo: false, total, page: normalized.page, pageSize: normalized.pageSize, totalPages: Math.ceil(total / normalized.pageSize), query: normalized.query, category: normalized.category };
   }
 
   let legacyRequest = supabase
@@ -190,7 +242,8 @@ export async function getFeaturedAuctions(filters: MarketplaceAuctionFilters = {
     return { auctions: [] as AuctionView[], isDemo: false, total: 0, page: normalized.page, pageSize: normalized.pageSize, totalPages: 0, query: normalized.query, category: normalized.category };
   }
   const total = legacy.count ?? 0;
-  return { auctions: (legacy.data ?? []).map((row) => mapAuction(row)), isDemo: false, total, page: normalized.page, pageSize: normalized.pageSize, totalPages: Math.ceil(total / normalized.pageSize), query: normalized.query, category: normalized.category };
+  const auctions = await attachPrimaryImages(supabase, (legacy.data ?? []).map((row) => mapAuction(row)));
+  return { auctions, isDemo: false, total, page: normalized.page, pageSize: normalized.pageSize, totalPages: Math.ceil(total / normalized.pageSize), query: normalized.query, category: normalized.category };
 }
 
 export async function getAuctionById(id: string) {

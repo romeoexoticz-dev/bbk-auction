@@ -104,9 +104,15 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
             {auctions.map((lot) => (
               <Link className="lot-card-link" href={`/auctions/${lot.id}`} key={lot.id}>
               <article className="lot-card">
-                <div className={`lot-art ${lot.tone}`}>
+                <div
+                  aria-label={lot.primaryImageUrl ? `รูปหน้ารายการ ${lot.title}` : undefined}
+                  className={`lot-art ${lot.tone}${lot.primaryImageUrl ? " has-photo" : ""}`}
+                  role={lot.primaryImageUrl ? "img" : undefined}
+                  style={lot.primaryImageUrl ? { backgroundImage: `url("${lot.primaryImageUrl}")` } : undefined}
+                >
                   <span className="live-badge"><i /> {lot.status.toUpperCase()}</span>
-                  <span className="lot-icon">{lot.icon}</span>
+                  {!lot.primaryImageUrl && <span className="lot-icon">{lot.icon}</span>}
+                  {lot.primaryImageUrl && <span className="image-watermark lot-image-watermark">BBK AUCTION</span>}
                   <span className="lot-time"><AuctionCountdown endsAt={lot.endsAt} /></span>
                 </div>
                 <div className="lot-body">

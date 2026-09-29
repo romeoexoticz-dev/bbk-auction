@@ -119,8 +119,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .lot-art.note { background: linear-gradient(135deg, #374f43, #10281f); }
 .lot-art.amulet { background: radial-gradient(circle, #d6b777, #65502d 26%, #1d1b17 27%, #111 65%); }
 .lot-art.card { background: linear-gradient(135deg, #38233d, #111827 60%, #193b43); }
+.lot-art.has-photo { background-color: #171713; background-position: center; background-repeat: no-repeat; background-size: contain; }
 .lot-art::after { border: 1px solid rgba(255,255,255,.2); content: ""; inset: 15px; position: absolute; }
 .lot-icon { align-items: center; border: 1px solid rgba(232,199,127,.65); border-radius: 50%; color: #dfc88f; display: flex; font-family: Georgia, serif; font-size: 46px; height: 106px; justify-content: center; text-shadow: 0 4px 14px black; width: 106px; }
+.lot-image-watermark { bottom: 40px; right: 24px; }
 .live-badge { background: #8d332d; color: white; font-size: 8px; font-weight: 750; left: 13px; letter-spacing: .14em; padding: 7px 9px; position: absolute; top: 13px; z-index: 2; }
 .live-badge i { background: white; border-radius: 50%; display: inline-block; height: 5px; margin-right: 5px; width: 5px; }
 .lot-time { background: rgba(9,9,8,.78); bottom: 13px; color: white; font-family: var(--font-geist-mono); font-size: 10px; letter-spacing: .05em; padding: 7px 9px; position: absolute; right: 13px; z-index: 2; }
