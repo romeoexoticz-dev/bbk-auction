@@ -33,7 +33,7 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
   if (totalPages > 0 && page > totalPages) redirect(marketplaceHref(query, category, totalPages));
   return (
     <div className="market-page">
-      <div className="demo-ribbon">{isDemo ? "FOUNDATION PREVIEW · ข้อมูลในหน้านี้เป็นตัวอย่าง" : "CONNECTED · ข้อมูลจาก SUPABASE ส่วนกลาง"}</div>
+      {isDemo && <div className="demo-ribbon">FOUNDATION PREVIEW · ข้อมูลในหน้านี้เป็นตัวอย่าง</div>}
       <header className="market-header">
         <Brand />
         <nav className="market-nav" aria-label="เมนูหลัก">
