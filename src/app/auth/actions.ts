@@ -50,6 +50,11 @@ function safeNextPath(value: FormDataEntryValue | null) {
     : "/";
 }
 
+function postSignInPath(value: FormDataEntryValue | null) {
+  const next = safeNextPath(value);
+  return next === "/account" || next.startsWith("/account#") ? "/" : next;
+}
+
 export async function signIn(
   _state: AuthActionState,
   formData: FormData,
@@ -71,7 +76,7 @@ export async function signIn(
   }
   if (error) return { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
 
-  redirect(safeNextPath(formData.get("next")));
+  redirect(postSignInPath(formData.get("next")));
 }
 
 export async function signInWithGoogle(formData: FormData) {
@@ -79,7 +84,7 @@ export async function signInWithGoogle(formData: FormData) {
     redirect("/auth/sign-in?error=provider");
   }
 
-  const next = safeNextPath(formData.get("next"));
+  const next = postSignInPath(formData.get("next"));
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const callbackUrl = new URL("/auth/callback", appUrl);
   callbackUrl.searchParams.set("next", next);

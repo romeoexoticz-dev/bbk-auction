@@ -7,7 +7,8 @@ export async function GET(request: Request) {
   const code = url.searchParams.get("code");
   const flowId = url.searchParams.get("sb_flow_id");
   const requestedNext = url.searchParams.get("next");
-  const next = requestedNext?.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
+  const safeNext = requestedNext?.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
+  const next = safeNext === "/account" || safeNext.startsWith("/account#") ? "/" : safeNext;
 
   if (code && isSupabaseConfigured()) {
     const supabase = await createClient();
