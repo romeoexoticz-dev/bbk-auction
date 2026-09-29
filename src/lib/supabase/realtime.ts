@@ -38,12 +38,17 @@ export function subscribeToAuction(
     });
 }
 
-export function subscribeToNotifications(
+export async function subscribeToNotifications(
   userId: string,
   onCommittedChange: (event: RealtimeChangeEvent) => void,
   onStatus?: RealtimeStatusHandler,
-): RealtimeChannel {
+): Promise<RealtimeChannel> {
   const supabase = createClient();
+
+  // Private Broadcast channels are authorized with the signed-in user's JWT.
+  // Explicitly refresh the Realtime auth context before every (re)subscribe so
+  // reconnects do not fall back to the publishable-key/anon role.
+  await supabase.realtime.setAuth();
 
   return supabase
     .channel(`notifications:${userId}`, { config: { private: true } })

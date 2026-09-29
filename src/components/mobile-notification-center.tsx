@@ -111,7 +111,7 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
 
   useEffect(() => {
     let disposed = false;
-    let channel: ReturnType<typeof subscribeToNotifications> | null = null;
+    let channel: Awaited<ReturnType<typeof subscribeToNotifications>> | null = null;
     let reconnectTimer: number | undefined;
     let connectionWatchdog: number | undefined;
     let refreshTimer: number | undefined;
@@ -167,7 +167,7 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
       }, 12_000);
 
       try {
-        channel = subscribeToNotifications(
+        channel = await subscribeToNotifications(
           userId,
           (event: RealtimeChangeEvent) => {
             if (!disposed && generation === connectionGeneration) handleCommittedChange(event);
