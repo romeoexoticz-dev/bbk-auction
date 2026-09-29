@@ -27,7 +27,7 @@ export function AuthForm({ googleEnabled, nextPath }: { googleEnabled: boolean; 
           <input name="next" type="hidden" value={nextPath} />
           <button className="auth-google" type="submit">
             <span aria-hidden="true">G</span>
-            ดำเนินการต่อด้วย Google
+            เข้าสู่ระบบ / สมัครสมาชิกด้วย Google
           </button>
         </form>
         <div className="auth-divider"><span>หรือใช้อีเมล</span></div>
