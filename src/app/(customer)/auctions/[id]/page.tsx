@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { Brand } from "@/components/brand";
 import { AuctionCountdown } from "@/components/auction-countdown";
 import { AuctionLiveRefresh } from "@/components/auction-live-refresh";
+import { AuctionImageGallery } from "@/components/auction-image-gallery";
 import { BidForm } from "@/components/bid-form";
 import { formatBaht, getAuctionById, getAuctionMedia, getAuctionOutcome, getPublicBidHistory } from "@/lib/auctions/queries";
 import { getCurrentBidderVerification } from "@/lib/identity/queries";
@@ -17,7 +18,6 @@ export default async function AuctionDetailPage({ params }: PageProps<"/auctions
     getAuctionMedia(auction.id),
     getPublicBidHistory(auction.id),
   ]);
-  const primaryImage = media.find((item) => item.kind === "front") ?? media.find((item) => item.kind === "cover") ?? media[0];
   const outcome = auction.status === "ended" || auction.status === "settled"
     ? await getAuctionOutcome(auction.id)
     : null;
@@ -44,10 +44,7 @@ export default async function AuctionDetailPage({ params }: PageProps<"/auctions
       <div className="demo-ribbon">{configured ? "LIVE DATA · ราคาจริงจากฐานข้อมูลกลาง" : "DEMO LOT · ไม่รับ bid และไม่มีธุรกรรมเงินจริง"}</div>
       <header className="market-header detail-header"><Brand /><Link className="button button-outline" href="/">← กลับหน้าตลาด</Link></header>
       <main className="auction-detail">
-        <section className="auction-gallery">
-          <div className={`detail-art ${auction.tone}${primaryImage ? " has-photo" : ""}`} aria-label={primaryImage ? `รูปสินค้าหลัก ${auction.title}` : undefined} role={primaryImage ? "img" : undefined} style={primaryImage ? { backgroundImage: `url("${primaryImage.url}")` } : undefined}><span className="live-badge"><i /> {auction.status.toUpperCase()}</span>{!primaryImage && <span className="detail-icon">{auction.icon}</span>}<small>{primaryImage ? "ภาพสินค้าจริงจาก BBK" : "ยังไม่มีรูปสินค้า"}</small><span className="image-watermark">BBK AUCTION</span></div>
-          <div className="evidence-strip">{media.length > 0 ? media.map((item) => <span className="evidence-photo" key={item.id} style={{ backgroundImage: `url("${item.url}")` }}><b>{item.kind === "front" ? "ด้านหน้า" : item.kind === "back" ? "ด้านหลัง" : item.kind === "defect" ? "ตำหนิ" : item.kind === "evidence" ? "หลักฐาน" : "เพิ่มเติม"}</b></span>) : <><span>ภาพด้านหน้า</span><span>ภาพด้านหลัง</span><span>ตำหนิ/ขอบ</span><span>หลักฐาน</span></>}</div>
-        </section>
+        <AuctionImageGallery icon={auction.icon} media={media} status={auction.status} title={auction.title} tone={auction.tone} />
         <section className="auction-summary">
           <span className="section-label">{auction.category} · VERSION {auction.version}</span>
           <h1>{auction.title}</h1>
