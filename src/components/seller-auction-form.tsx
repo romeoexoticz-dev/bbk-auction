@@ -6,11 +6,57 @@ import { createAuctionDraft, updateAuctionDraft, type CreateAuctionState } from 
 import { createClient } from "@/lib/supabase/client";
 
 const initialState: CreateAuctionState = {};
-const imageTypes = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-]);
+const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const auctionImageSize = 800;
+const auctionImageQuality = 0.82;
+
+async function loadBrowserImage(file: File) {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = objectUrl;
+    await image.decode();
+    return image;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function prepareAuctionImage(file: File) {
+  const image = await loadBrowserImage(file);
+  if (!image.naturalWidth || !image.naturalHeight) {
+    throw new Error("INVALID_IMAGE_DIMENSIONS");
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = auctionImageSize;
+  canvas.height = auctionImageSize;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("CANVAS_UNAVAILABLE");
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, auctionImageSize, auctionImageSize);
+  const scale = Math.min(auctionImageSize / image.naturalWidth, auctionImageSize / image.naturalHeight);
+  const width = Math.round(image.naturalWidth * scale);
+  const height = Math.round(image.naturalHeight * scale);
+  const x = Math.round((auctionImageSize - width) / 2);
+  const y = Math.round((auctionImageSize - height) / 2);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(image, x, y, width, height);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/webp", auctionImageQuality);
+  });
+  if (!blob || blob.type !== "image/webp") throw new Error("WEBP_CONVERSION_FAILED");
+
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "auction-image";
+  return new File([blob], `${baseName}.webp`, {
+    lastModified: file.lastModified,
+    type: "image/webp",
+  });
+}
 
 async function checksumSha256(file: File) {
   const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
@@ -93,6 +139,17 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
     setCreateState({});
 
     startCreateTransition(async () => {
+      const preparedImages: typeof images = [];
+      try {
+        for (const image of images) {
+          preparedImages.push({ ...image, file: await prepareAuctionImage(image.file) });
+        }
+      } catch (error) {
+        console.error("Unable to prepare auction image", { message: error instanceof Error ? error.message : "UNKNOWN" });
+        setCreateState({ error: "แปลงรูปเป็น WebP 800×800 ไม่สำเร็จ กรุณาเลือกรูปใหม่แล้วลองอีกครั้ง" });
+        return;
+      }
+
       const draft = await createAuctionDraft(initialState, fields);
       if (draft.error || !draft.auctionId) {
         setCreateState(draft);
@@ -107,16 +164,15 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
       }
 
       let uploadedCount = 0;
-      for (const [position, { kind, file }] of images.entries()) {
-        const extension = imageTypes.get(file.type)!;
-        const objectPath = `${userData.user.id}/${draft.auctionId}/${crypto.randomUUID()}.${extension}`;
+      for (const [position, { kind, file }] of preparedImages.entries()) {
+        const objectPath = `${userData.user.id}/${draft.auctionId}/${crypto.randomUUID()}.webp`;
         const { error: uploadError } = await supabase.storage
           .from("auction-media")
           .upload(objectPath, file, { contentType: file.type, upsert: false });
 
         if (uploadError) {
           console.error("Unable to upload auction media", { auctionId: draft.auctionId, position, kind, code: uploadError.name });
-          setCreateState({ ...draft, warning: `สร้างฉบับร่างแล้ว แต่อัปโหลดรูปสำเร็จ ${uploadedCount}/${images.length} รูป` });
+          setCreateState({ ...draft, warning: `สร้างฉบับร่างแล้ว แต่อัปโหลดรูปสำเร็จ ${uploadedCount}/${preparedImages.length} รูป` });
           router.refresh();
           return;
         }
@@ -134,7 +190,7 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
         if (metadataError) {
           console.error("Unable to register auction media", { auctionId: draft.auctionId, position, kind, code: metadataError.code });
           await supabase.storage.from("auction-media").remove([objectPath]);
-          setCreateState({ ...draft, warning: `สร้างฉบับร่างแล้ว แต่บันทึกรูปสำเร็จ ${uploadedCount}/${images.length} รูป` });
+          setCreateState({ ...draft, warning: `สร้างฉบับร่างแล้ว แต่บันทึกรูปสำเร็จ ${uploadedCount}/${preparedImages.length} รูป` });
           router.refresh();
           return;
         }
@@ -142,7 +198,7 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
       }
 
       setCreateState({
-        success: "บันทึกฉบับร่างและอัปโหลดรูปครบแล้ว ยังไม่แสดงหน้าลูกค้าจนกว่าแอดมินจะกดเปิด",
+        success: "บันทึกฉบับร่างและอัปโหลดรูป WebP 800×800 ครบแล้ว ยังไม่แสดงหน้าลูกค้าจนกว่าแอดมินจะกดเปิด",
         auctionId: draft.auctionId,
       });
       form.reset();
@@ -198,7 +254,7 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
             <textarea defaultValue={editAuction?.expertNotes} maxLength={2000} minLength={5} name="expertNotes" placeholder="บันทึกสิ่งที่ตรวจพบจากสินค้าจริง โดยไม่ฟันธงเกินหลักฐาน" required rows={4} />
           </label>
           {!editMode && <>
-            <div className="form-info wide"><strong>รูปหลักฐานที่ต้องมี 3 มุม</strong><br />ใช้ภาพสินค้าจริง ชัดเจน และไม่แต่งภาพจนสภาพคลาดเคลื่อน · JPG, PNG หรือ WebP รูปละไม่เกิน 10 MB</div>
+            <div className="form-info wide"><strong>รูปหลักฐานที่ต้องมี 3 มุม · มาตรฐาน 800×800</strong><br />ระบบจะย่อและจัดภาพไว้กึ่งกลางโดยไม่ตัดขอบ แล้วแปลงเป็น WebP ก่อนส่งตรงไป Supabase Storage · เลือกไฟล์ JPG, PNG หรือ WebP ขนาดต้นฉบับไม่เกิน 10 MB</div>
             <label>รูปด้านหน้า
               <input accept="image/jpeg,image/png,image/webp" name="frontImage" required type="file" />
             </label>
