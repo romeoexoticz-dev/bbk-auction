@@ -34,18 +34,35 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
   return (
     <div className="market-page">
       {isDemo && <div className="demo-ribbon">FOUNDATION PREVIEW · ข้อมูลในหน้านี้เป็นตัวอย่าง</div>}
+      <div className="market-promise-bar">
+        <span>BBK AUCTION</span>
+        <span>ประมูลก่อน ชำระเมื่อชนะ</span>
+        <span>ตรวจสอบราคาและเวลาด้วยระบบกลาง</span>
+      </div>
       <header className="market-header">
-        <Brand />
+        <div className="market-header-main">
+          <Brand />
+          <form action="/" className="market-header-search" method="get">
+            <label>
+              <span className="sr-only">ค้นหารายการประมูล</span>
+              <input defaultValue={query} maxLength={80} name="q" placeholder="ค้นหาเหรียญ ธนบัตร พระเครื่อง การ์ด และของสะสม" type="search" />
+            </label>
+            {category && <input name="category" type="hidden" value={category} />}
+            <button type="submit">ค้นหา</button>
+          </form>
+          <div className="header-actions">
+            <Link className="header-shortcut" href="/#live-lots"><span aria-hidden="true">♢</span><small>ประมูล</small></Link>
+            <Link className="header-shortcut" href={user ? "/account#notifications" : "/auth/sign-in?next=/account"}><span aria-hidden="true">♧</span><small>แจ้งเตือน</small></Link>
+            <Link className="header-shortcut" href={user ? "/account" : "/auth/sign-in?next=/account"}><span aria-hidden="true">○</span><small>บัญชี</small></Link>
+          </div>
+        </div>
         <nav className="market-nav" aria-label="เมนูหลัก">
           <Link className="active" href="/">ประมูลสด</Link>
           <Link href="#categories">หมวดหมู่</Link>
           <Link href="#how-it-works">วิธีใช้งาน</Link>
-        </nav>
-        <div className="header-actions">
           {user ? (
             <>
               <Link className="button button-gold" href="/account/verification">ขอสิทธิ์ประมูล</Link>
-              <Link className="text-link" href="/account">บัญชีของฉัน</Link>
               <span className="account-badge">
                 <small>เข้าสู่ระบบแล้ว</small>
                 <strong>{user.email ?? "สมาชิก"}</strong>
@@ -57,7 +74,7 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
           ) : (
             <Link className="button button-dark" href="/auth/sign-in">เข้าสู่ระบบ</Link>
           )}
-        </div>
+        </nav>
       </header>
 
       <main>
@@ -87,6 +104,11 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
               <Image alt="ภาพรายการเด่นธนบัตร 10 บาท รุ่น 9 พร้อมตรา BBK AUCTION" fill priority sizes="(max-width: 820px) 92vw, 48vw" src="/brand/bbk-auction-hero.png" />
             </figure>
           </div>
+        </section>
+
+        <section aria-label="เลือกหมวดหมู่" className="category-strip" id="categories">
+          <Link className={!category ? "active" : ""} href={marketplaceHref(query, "")}><span aria-hidden="true">▦</span>ทั้งหมด</Link>
+          {auctionCategories.map((item) => <span className="category-link-group" key={item}><Link className={category === item ? "active" : ""} href={marketplaceHref(query, item)}><span aria-hidden="true">◇</span>{item}</Link></span>)}
         </section>
 
         <section className="content-section" id="live-lots">
@@ -130,10 +152,6 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
             <strong>หน้า {page.toLocaleString("th-TH")} / {totalPages.toLocaleString("th-TH")}</strong>
             {page < totalPages ? <Link href={marketplaceHref(query, category, page + 1)}>หน้าถัดไป →</Link> : <span aria-disabled="true">หน้าถัดไป →</span>}
           </nav>}
-        </section>
-
-        <section className="category-strip" id="categories">
-          <Link className={!category ? "active" : ""} href={marketplaceHref(query, "")}>ทั้งหมด</Link>{auctionCategories.map((item) => <span className="category-link-group" key={item}><i /><Link className={category === item ? "active" : ""} href={marketplaceHref(query, item)}>{item}</Link></span>)}
         </section>
 
         <section className="how-section" id="how-it-works">
