@@ -1350,11 +1350,17 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .market-page .lot-art::after { border-color: rgba(255,255,255,.5); border-radius: 6px; }
 .market-page .live-badge { background: var(--market-orange); color: white; }
 .market-page .lot-time { background: rgba(67,20,7,.88); }
+.market-page .live-badge.completed { background: #57534e; letter-spacing: .02em; }
+.market-page .lot-time.completed { background: rgba(41,37,36,.9); }
+.market-page .lot-card.completed { background: #fcfcfb; }
+.market-page .lot-card.completed .lot-art::before { background: rgba(41,37,36,.08); content: ""; inset: 0; pointer-events: none; position: absolute; z-index: 1; }
 .market-page .lot-body { padding: 15px; }
 .market-page .lot-category { color: var(--market-orange-dark); }
 .market-page .lot-body h3 { font-size: 16px; }
 .market-page .lot-price strong { color: var(--market-orange-dark); }
 .market-page .auction-pagination a { background: var(--market-orange-soft); border-color: var(--market-orange-line); color: var(--market-orange-dark); }
+.market-page .completed-section { border-top: 1px solid #e7e5e4; padding-top: 56px; }
+.market-page .completed-count { color: #78716c; font-size: 13px; font-weight: 700; }
 .market-page .how-section { background: white; max-width: none; padding-left: max(24px, calc((100vw - 1392px) / 2)); padding-right: max(24px, calc((100vw - 1392px) / 2)); }
 .market-page .step-grid span { color: var(--market-orange); }
 .market-page .market-footer { background: #fff7ed; border-color: #fed7aa; }

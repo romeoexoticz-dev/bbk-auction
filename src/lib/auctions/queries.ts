@@ -58,6 +58,7 @@ export type PublicBidHistoryEntry = {
 const now = Date.now();
 export const auctionCategories = ["เหรียญกษาปณ์", "ธนบัตร", "พระเครื่อง", "การ์ดสะสม", "ของเก่า"] as const;
 const customerMarketplaceStatuses: AuctionView["status"][] = ["scheduled", "live"];
+const customerCompletedStatuses: AuctionView["status"][] = ["ended", "settled"];
 const customerDetailStatuses: AuctionView["status"][] = ["scheduled", "live", "ended", "settled"];
 
 export type MarketplaceAuctionFilters = {
@@ -244,6 +245,45 @@ export async function getFeaturedAuctions(filters: MarketplaceAuctionFilters = {
   const total = legacy.count ?? 0;
   const auctions = await attachPrimaryImages(supabase, (legacy.data ?? []).map((row) => mapAuction(row)));
   return { auctions, isDemo: false, total, page: normalized.page, pageSize: normalized.pageSize, totalPages: Math.ceil(total / normalized.pageSize), query: normalized.query, category: normalized.category };
+}
+
+export async function getCompletedAuctions(filters: MarketplaceAuctionFilters = {}) {
+  const normalized = normalizedMarketplaceFilters(filters);
+  const limit = normalized.pageSize;
+
+  if (!isSupabaseConfigured()) {
+    return { auctions: [] as AuctionView[], total: 0 };
+  }
+
+  const supabase = await reconcileAuctionLifecycle();
+  let currentRequest = supabase
+    .from("auctions")
+    .select(trustSelection, { count: "exact" })
+    .in("status", customerCompletedStatuses)
+    .order("ends_at", { ascending: false });
+  if (normalized.category) currentRequest = currentRequest.eq("category", normalized.category);
+  if (normalized.query) currentRequest = currentRequest.or(`title.ilike.%${normalized.query}%,description.ilike.%${normalized.query}%`);
+  const current = await currentRequest.range(0, limit - 1);
+
+  if (!current.error) {
+    const auctions = await attachPrimaryImages(supabase, (current.data ?? []).map((row) => mapAuction(row)));
+    return { auctions, total: current.count ?? 0 };
+  }
+
+  let legacyRequest = supabase
+    .from("auctions")
+    .select(selection, { count: "exact" })
+    .in("status", customerCompletedStatuses)
+    .order("ends_at", { ascending: false });
+  if (normalized.category) legacyRequest = legacyRequest.eq("category", normalized.category);
+  if (normalized.query) legacyRequest = legacyRequest.or(`title.ilike.%${normalized.query}%,description.ilike.%${normalized.query}%`);
+  const legacy = await legacyRequest.range(0, limit - 1);
+  if (legacy.error) {
+    console.error("Unable to load completed auctions", { code: legacy.error.code });
+    return { auctions: [] as AuctionView[], total: 0 };
+  }
+  const auctions = await attachPrimaryImages(supabase, (legacy.data ?? []).map((row) => mapAuction(row)));
+  return { auctions, total: legacy.count ?? 0 };
 }
 
 export async function getAuctionById(id: string) {
