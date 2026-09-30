@@ -28,7 +28,7 @@ export default async function SignInPage({
     <main className="auth-page">
       <Link className="auth-back" href="/">← กลับหน้าตลาด</Link>
       <section className="auth-intro">
-        <Brand />
+        <Brand market />
         <span className="kicker"><i /> MEMBER ACCESS</span>
         <h1>เข้าสู่ตลาดของสะสม<br /><em>อย่างมั่นใจ</em></h1>
         <p>สมัครเป็นสมาชิกเพื่อดูรายการของ BBK วางราคา และติดตามผลการประมูล</p>

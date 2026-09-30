@@ -1,10 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
-import { Brand } from "@/components/brand";
 import { AuctionCountdown } from "@/components/auction-countdown";
-import { signOut } from "@/app/auth/actions";
-import { getCurrentUser, userHasRole } from "@/lib/auth/authorization";
+import { Brand } from "@/components/brand";
 import { auctionCategories, formatBaht, getCompletedAuctions, getFeaturedAuctions, type AuctionView } from "@/lib/auctions/queries";
 
 export const dynamic = "force-dynamic";
@@ -66,62 +63,16 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
   const requestedCompletedPage = Math.max(1, Number.parseInt(firstParam(params.completedPage), 10) || 1);
   const requestedQuery = firstParam(params.q);
   const requestedCategory = firstParam(params.category);
-  const [{ auctions, isDemo, total, page, totalPages, query, category }, completedResult, user] = await Promise.all([
+  const [{ auctions, isDemo, total, page, totalPages, query, category }, completedResult] = await Promise.all([
     getFeaturedAuctions({ query: requestedQuery, category: requestedCategory, page: requestedPage, pageSize: 12 }),
     getCompletedAuctions({ query: requestedQuery, category: requestedCategory, page: requestedCompletedPage, pageSize: 12 }),
-    getCurrentUser(),
   ]);
-  const isAdmin = user ? await userHasRole(user.id, "admin") : false;
   const completedAuctions = completedResult.auctions;
   if (totalPages > 0 && page > totalPages) redirect(marketplaceHref(query, category, totalPages));
   if (completedResult.totalPages > 0 && completedResult.page > completedResult.totalPages) redirect(completedMarketplaceHref(query, category, completedResult.totalPages));
   return (
     <div className="market-page">
       {isDemo && <div className="demo-ribbon">FOUNDATION PREVIEW · ข้อมูลในหน้านี้เป็นตัวอย่าง</div>}
-      <div className="market-promise-bar">
-        <span>BBK AUCTION</span>
-        <span>ประมูลก่อน ชำระเมื่อชนะ</span>
-        <span>ตรวจสอบราคาและเวลาด้วยระบบกลาง</span>
-      </div>
-      <header className="market-header">
-        <div className="market-header-main">
-          <Brand />
-          <form action="/" className="market-header-search" method="get">
-            <label>
-              <span className="sr-only">ค้นหารายการประมูล</span>
-              <input defaultValue={query} maxLength={80} name="q" placeholder="ค้นหาเหรียญ ธนบัตร พระเครื่อง การ์ด และของสะสม" type="search" />
-            </label>
-            {category && <input name="category" type="hidden" value={category} />}
-            <button type="submit">ค้นหา</button>
-          </form>
-          <div className="header-actions">
-            <Link className="header-shortcut" href="/#live-lots"><span aria-hidden="true">♢</span><small>ประมูล</small></Link>
-            <Link className="header-shortcut" href={user ? "/account#notifications" : "/auth/sign-in?next=/account"}><span aria-hidden="true">♧</span><small>แจ้งเตือน</small></Link>
-            <Link className="header-shortcut" href={user ? "/account" : "/auth/sign-in?next=/account"}><span aria-hidden="true">○</span><small>บัญชี</small></Link>
-            {isAdmin && <Link className="header-shortcut admin-entry-shortcut" href="/admin"><span aria-hidden="true">⚙</span><small>แอดมิน</small></Link>}
-          </div>
-        </div>
-        <nav className="market-nav" aria-label="เมนูหลัก">
-          <Link className="active" href="/">ประมูลสด</Link>
-          <Link href="#categories">หมวดหมู่</Link>
-          <Link href="#how-it-works">วิธีใช้งาน</Link>
-          {user ? (
-            <>
-              <Link className="button button-gold" href="/account/verification">ขอสิทธิ์ประมูล</Link>
-              <span className="account-badge">
-                <small>เข้าสู่ระบบแล้ว</small>
-                <strong>{user.email ?? "สมาชิก"}</strong>
-              </span>
-              <form action={signOut}>
-                <button className="button button-outline" type="submit">ออกจากระบบ</button>
-              </form>
-            </>
-          ) : (
-            <Link className="button button-dark" href="/auth/sign-in">เข้าสู่ระบบ</Link>
-          )}
-        </nav>
-      </header>
-
       <main>
         <form action="/" className="mobile-market-search" method="get">
           <label><span className="sr-only">ค้นหารายการประมูล</span><input defaultValue={query} maxLength={80} name="q" placeholder="ค้นหาเหรียญ ธนบัตร พระ หรือการ์ด…" type="search" /></label>
@@ -144,14 +95,17 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
               <span><b>✓</b> มีประวัติการทำรายการ</span>
             </div>
           </div>
-          <div className="hero-showcase">
-            <figure className="hero-feature-image">
-              <Image alt="ภาพรายการเด่นธนบัตร 10 บาท รุ่น 9 พร้อมตรา BBK AUCTION" fill priority sizes="(max-width: 820px) 92vw, 48vw" src="/brand/bbk-auction-hero.png" />
-            </figure>
+          <div className="hero-guide-card">
+            <span><b>♢</b> ยืนยันบัญชีก่อนประมูล</span>
+            <span><b>◇</b> วางราคาอย่างโปร่งใส</span>
+            <span><b>▣</b> ชนะแล้วดูยอดในออเดอร์</span>
+            <Link href="#how-it-works">วิธีซื้อและขาย <b>→</b></Link>
           </div>
         </section>
 
+        <div className="market-catalog-layout">
         <section aria-label="เลือกหมวดหมู่" className="category-strip" id="categories">
+          <h2><span aria-hidden="true">▱</span> หมวดหมู่สินค้า</h2>
           <Link className={!category ? "active" : ""} href={marketplaceHref(query, "")}><span aria-hidden="true">▦</span>ทั้งหมด</Link>
           {auctionCategories.map((item) => <span className="category-link-group" key={item}><Link className={category === item ? "active" : ""} href={marketplaceHref(query, item)}><span aria-hidden="true">◇</span>{item}</Link></span>)}
         </section>
@@ -176,6 +130,7 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
             {page < totalPages ? <Link href={marketplaceHref(query, category, page + 1)}>หน้าถัดไป →</Link> : <span aria-disabled="true">หน้าถัดไป →</span>}
           </nav>}
         </section>
+        </div>
 
         {completedAuctions.length > 0 && <section className="content-section completed-section" id="completed-lots">
           <div className="section-heading">
@@ -203,7 +158,7 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
       </main>
 
       <footer className="market-footer">
-        <Brand />
+        <Brand market />
         <nav aria-label="ข้อมูลและความปลอดภัย" className="market-footer-links">
           <Link href="/auction-rules">กติกาประมูล</Link>
           <Link href="/privacy">Privacy Policy</Link>
