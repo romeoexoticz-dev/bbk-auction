@@ -249,10 +249,11 @@ export async function getFeaturedAuctions(filters: MarketplaceAuctionFilters = {
 
 export async function getCompletedAuctions(filters: MarketplaceAuctionFilters = {}) {
   const normalized = normalizedMarketplaceFilters(filters);
-  const limit = normalized.pageSize;
+  const from = (normalized.page - 1) * normalized.pageSize;
+  const to = from + normalized.pageSize - 1;
 
   if (!isSupabaseConfigured()) {
-    return { auctions: [] as AuctionView[], total: 0 };
+    return { auctions: [] as AuctionView[], total: 0, page: normalized.page, totalPages: 0 };
   }
 
   const supabase = await reconcileAuctionLifecycle();
@@ -263,11 +264,12 @@ export async function getCompletedAuctions(filters: MarketplaceAuctionFilters = 
     .order("ends_at", { ascending: false });
   if (normalized.category) currentRequest = currentRequest.eq("category", normalized.category);
   if (normalized.query) currentRequest = currentRequest.or(`title.ilike.%${normalized.query}%,description.ilike.%${normalized.query}%`);
-  const current = await currentRequest.range(0, limit - 1);
+  const current = await currentRequest.range(from, to);
 
   if (!current.error) {
     const auctions = await attachPrimaryImages(supabase, (current.data ?? []).map((row) => mapAuction(row)));
-    return { auctions, total: current.count ?? 0 };
+    const total = current.count ?? 0;
+    return { auctions, total, page: normalized.page, totalPages: Math.ceil(total / normalized.pageSize) };
   }
 
   let legacyRequest = supabase
@@ -277,13 +279,14 @@ export async function getCompletedAuctions(filters: MarketplaceAuctionFilters = 
     .order("ends_at", { ascending: false });
   if (normalized.category) legacyRequest = legacyRequest.eq("category", normalized.category);
   if (normalized.query) legacyRequest = legacyRequest.or(`title.ilike.%${normalized.query}%,description.ilike.%${normalized.query}%`);
-  const legacy = await legacyRequest.range(0, limit - 1);
+  const legacy = await legacyRequest.range(from, to);
   if (legacy.error) {
     console.error("Unable to load completed auctions", { code: legacy.error.code });
-    return { auctions: [] as AuctionView[], total: 0 };
+    return { auctions: [] as AuctionView[], total: 0, page: normalized.page, totalPages: 0 };
   }
+  const total = legacy.count ?? 0;
   const auctions = await attachPrimaryImages(supabase, (legacy.data ?? []).map((row) => mapAuction(row)));
-  return { auctions, total: legacy.count ?? 0 };
+  return { auctions, total, page: normalized.page, totalPages: Math.ceil(total / normalized.pageSize) };
 }
 
 export async function getAuctionById(id: string) {

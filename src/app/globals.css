@@ -1357,6 +1357,8 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .market-page .lot-body { padding: 15px; }
 .market-page .lot-category { color: var(--market-orange-dark); }
 .market-page .lot-body h3 { font-size: 16px; }
+.market-page .lot-result { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 7px; color: #c2410c; font-size: 12px; font-weight: 800; margin-top: 12px; padding: 8px 10px; }
+.market-page .lot-result.empty { background: #f5f5f4; border-color: #d6d3d1; color: #57534e; }
 .market-page .lot-price strong { color: var(--market-orange-dark); }
 .market-page .auction-pagination a { background: var(--market-orange-soft); border-color: var(--market-orange-line); color: var(--market-orange-dark); }
 .market-page .completed-section { border-top: 1px solid #e7e5e4; padding-top: 56px; }

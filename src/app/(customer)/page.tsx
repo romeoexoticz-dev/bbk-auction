@@ -21,9 +21,18 @@ function marketplaceHref(query: string, category: string, page = 1) {
   return `/${params.size ? `?${params.toString()}` : ""}#live-lots`;
 }
 
+function completedMarketplaceHref(query: string, category: string, page: number) {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (category) params.set("category", category);
+  if (page > 1) params.set("completedPage", String(page));
+  return `/${params.size ? `?${params.toString()}` : ""}#completed-lots`;
+}
+
 function AuctionCard({ lot }: { lot: AuctionView }) {
   const completed = lot.status === "ended" || lot.status === "settled";
   const statusLabel = completed ? "ประมูลจบแล้ว" : lot.status === "scheduled" ? "เร็ว ๆ นี้" : "กำลังประมูล";
+  const resultLabel = lot.bidCount === 0 ? "ไม่มีคนประมูล" : `จบที่ ${formatBaht(lot.currentPrice)}`;
   return (
     <Link className="lot-card-link" href={`/auctions/${lot.id}`}>
       <article className={`lot-card${completed ? " completed" : ""}`}>
@@ -36,13 +45,14 @@ function AuctionCard({ lot }: { lot: AuctionView }) {
           <span className={`live-badge${completed ? " completed" : ""}`}><i /> {statusLabel}</span>
           {!lot.primaryImageUrl && <span className="lot-icon">{lot.icon}</span>}
           {lot.primaryImageUrl && <span className="image-watermark lot-image-watermark">BBK AUCTION</span>}
-          <span className={`lot-time${completed ? " completed" : ""}`}>{completed ? "ปิดประมูลแล้ว" : <AuctionCountdown endsAt={lot.endsAt} />}</span>
+          <span className={`lot-time${completed ? " completed" : ""}`}>{completed ? resultLabel : <AuctionCountdown endsAt={lot.endsAt} />}</span>
         </div>
         <div className="lot-body">
           <span className="lot-category">{lot.category}</span>
           <h3>{lot.title}</h3>
           <p>{lot.evidenceNote}</p>
-          <div className="lot-price"><div><small>{completed ? "ราคาปิด" : "ราคาปัจจุบัน"}</small><strong>{formatBaht(lot.currentPrice)}</strong></div><span>{lot.bidCount} bids</span></div>
+          {completed && <div className={`lot-result${lot.bidCount === 0 ? " empty" : ""}`}>{resultLabel}</div>}
+          <div className="lot-price"><div><small>{completed ? lot.bidCount === 0 ? "ราคาเริ่มต้น" : "ราคาปิด" : "ราคาปัจจุบัน"}</small><strong>{formatBaht(lot.currentPrice)}</strong></div><span>{lot.bidCount} bids</span></div>
         </div>
       </article>
     </Link>
@@ -52,15 +62,17 @@ function AuctionCard({ lot }: { lot: AuctionView }) {
 export default async function CustomerHome({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const requestedPage = Math.max(1, Number.parseInt(firstParam(params.page), 10) || 1);
+  const requestedCompletedPage = Math.max(1, Number.parseInt(firstParam(params.completedPage), 10) || 1);
   const requestedQuery = firstParam(params.q);
   const requestedCategory = firstParam(params.category);
   const [{ auctions, isDemo, total, page, totalPages, query, category }, completedResult, user] = await Promise.all([
     getFeaturedAuctions({ query: requestedQuery, category: requestedCategory, page: requestedPage, pageSize: 12 }),
-    getCompletedAuctions({ query: requestedQuery, category: requestedCategory, pageSize: 12 }),
+    getCompletedAuctions({ query: requestedQuery, category: requestedCategory, page: requestedCompletedPage, pageSize: 12 }),
     getCurrentUser(),
   ]);
   const completedAuctions = completedResult.auctions;
   if (totalPages > 0 && page > totalPages) redirect(marketplaceHref(query, category, totalPages));
+  if (completedResult.totalPages > 0 && completedResult.page > completedResult.totalPages) redirect(completedMarketplaceHref(query, category, completedResult.totalPages));
   return (
     <div className="market-page">
       {isDemo && <div className="demo-ribbon">FOUNDATION PREVIEW · ข้อมูลในหน้านี้เป็นตัวอย่าง</div>}
@@ -170,6 +182,11 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
           <div className="lot-grid completed-lot-grid">
             {completedAuctions.map((lot) => <AuctionCard key={lot.id} lot={lot} />)}
           </div>
+          {completedResult.totalPages > 1 && <nav aria-label="เปลี่ยนหน้ารายการประมูลจบแล้ว" className="auction-pagination completed-pagination">
+            {completedResult.page > 1 ? <Link href={completedMarketplaceHref(query, category, completedResult.page - 1)}>← หน้าก่อน</Link> : <span aria-disabled="true">← หน้าก่อน</span>}
+            <strong>หน้า {completedResult.page.toLocaleString("th-TH")} / {completedResult.totalPages.toLocaleString("th-TH")}</strong>
+            {completedResult.page < completedResult.totalPages ? <Link href={completedMarketplaceHref(query, category, completedResult.page + 1)}>หน้าถัดไป →</Link> : <span aria-disabled="true">หน้าถัดไป →</span>}
+          </nav>}
         </section>}
 
         <section className="how-section" id="how-it-works">
