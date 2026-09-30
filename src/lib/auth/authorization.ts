@@ -12,6 +12,23 @@ export async function getCurrentUser() {
   return data.user;
 }
 
+export async function userHasRole(userId: string, role: AppRole) {
+  if (!isSupabaseConfigured()) return false;
+
+  const supabase = await createClient();
+  const { data: allowed, error } = await supabase.rpc("has_role", {
+    p_role: role,
+    p_user_id: userId,
+  });
+
+  if (error) {
+    console.error("Unable to check user role", { code: error.code, role });
+    return false;
+  }
+
+  return allowed === true;
+}
+
 export async function requireRole(role: AppRole, returnTo: string) {
   if (!isSupabaseConfigured()) {
     return { demo: true as const, user: null };

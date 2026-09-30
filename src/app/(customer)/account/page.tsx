@@ -4,7 +4,7 @@ import { signOut } from "@/app/auth/actions";
 import { AuctionInterestForm } from "@/components/auction-interest-form";
 import { Brand } from "@/components/brand";
 import { formatBaht } from "@/lib/auctions/queries";
-import { getCurrentUser } from "@/lib/auth/authorization";
+import { getCurrentUser, userHasRole } from "@/lib/auth/authorization";
 import { createClient } from "@/lib/supabase/server";
 
 type BidRow = {
@@ -99,9 +99,10 @@ export default async function AccountPage({
   const user = await getCurrentUser();
   if (!user) redirect("/auth/sign-in?next=/account");
   const supabase = await createClient();
-  const [{ error: openError }, { error: closeError }] = await Promise.all([
+  const [{ error: openError }, { error: closeError }, isAdmin] = await Promise.all([
     supabase.rpc("open_due_auctions"),
     supabase.rpc("close_due_auctions"),
+    userHasRole(user.id, "admin"),
   ]);
   if (openError) console.error("Unable to open due auctions from account", { code: openError.code });
   if (closeError) console.error("Unable to close due auctions from account", { code: closeError.code });
@@ -179,7 +180,7 @@ export default async function AccountPage({
 
   return (
     <main className="account-page">
-      <header className="market-header detail-header"><Brand /><Link className="button button-outline" href="/">← กลับหน้าตลาด</Link></header>
+      <header className="market-header detail-header"><Brand /><div className="order-header-actions">{isAdmin && <Link className="button button-gold" href="/admin">เข้าระบบแอดมิน</Link>}<Link className="button button-outline" href="/">← กลับหน้าตลาด</Link></div></header>
       <section className="account-hero"><span className="kicker"><i /> MY BBK</span><h1>บัญชีของฉัน</h1><p>{user.email}</p></section>
       {passwordUpdated && <div className="account-system-message success"><strong>ตั้งรหัสผ่านใหม่สำเร็จ</strong><p>ครั้งต่อไปสามารถใช้รหัสผ่านใหม่นี้เข้าสู่ระบบได้</p></div>}
       {paymentDefault?.review_status === "warning" && <div className="account-system-message warning"><strong>คำเตือนการไม่ชำระครั้งที่ {paymentDefault.strike_count}</strong><p>Order ที่เลยกำหนดถูกยกเลิกแล้ว หากเกิดครั้งที่ 2 ระบบจะระงับสิทธิ์ประมูลเพื่อให้แอดมินตรวจสอบ</p></div>}
@@ -201,6 +202,7 @@ export default async function AccountPage({
           <Link href="#bid-history"><i aria-hidden="true">↻</i><span><strong>ประวัติการเสนอราคา</strong><small>ตรวจวันเวลาและจำนวนเงินย้อนหลัง</small></span><b aria-hidden="true">›</b></Link>
           <Link href="/auction-rules"><i aria-hidden="true">§</i><span><strong>กติกาการประมูล</strong><small>ค่าธรรมเนียม การชำระ และข้อกำหนด</small></span><b aria-hidden="true">›</b></Link>
           <Link href="/fraud-warning"><i aria-hidden="true">!</i><span><strong>เตือนช่องปลอมและมิจฉาชีพ</strong><small>ตรวจช่องทางทางการก่อนโอนเงิน</small></span><b aria-hidden="true">›</b></Link>
+          {isAdmin && <Link className="account-admin-entry" href="/admin"><i aria-hidden="true">⚙</i><span><strong>เข้าระบบแอดมิน</strong><small>จัดการรายการ สมาชิก และรายงาน</small></span><b aria-hidden="true">›</b></Link>}
         </nav>
         <form action={signOut} className="account-mobile-signout">
           <button type="submit"><span aria-hidden="true">↪</span>ออกจากระบบ</button>

@@ -1265,6 +1265,7 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   padding: 5px 8px;
 }
 .header-shortcut:hover { background: var(--market-orange-soft); color: var(--market-orange-dark); }
+.admin-entry-shortcut { color: var(--market-orange-dark); }
 .header-shortcut > span { font-family: Arial, sans-serif; font-size: 22px; line-height: 1; }
 .header-shortcut > small { font-size: 9px; font-weight: 750; white-space: nowrap; }
 .market-page .market-nav {

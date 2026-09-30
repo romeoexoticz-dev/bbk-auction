@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { AuctionCountdown } from "@/components/auction-countdown";
 import { signOut } from "@/app/auth/actions";
-import { getCurrentUser } from "@/lib/auth/authorization";
+import { getCurrentUser, userHasRole } from "@/lib/auth/authorization";
 import { auctionCategories, formatBaht, getCompletedAuctions, getFeaturedAuctions, type AuctionView } from "@/lib/auctions/queries";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +70,7 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
     getCompletedAuctions({ query: requestedQuery, category: requestedCategory, page: requestedCompletedPage, pageSize: 12 }),
     getCurrentUser(),
   ]);
+  const isAdmin = user ? await userHasRole(user.id, "admin") : false;
   const completedAuctions = completedResult.auctions;
   if (totalPages > 0 && page > totalPages) redirect(marketplaceHref(query, category, totalPages));
   if (completedResult.totalPages > 0 && completedResult.page > completedResult.totalPages) redirect(completedMarketplaceHref(query, category, completedResult.totalPages));
@@ -96,6 +97,7 @@ export default async function CustomerHome({ searchParams }: { searchParams: Pro
             <Link className="header-shortcut" href="/#live-lots"><span aria-hidden="true">♢</span><small>ประมูล</small></Link>
             <Link className="header-shortcut" href={user ? "/account#notifications" : "/auth/sign-in?next=/account"}><span aria-hidden="true">♧</span><small>แจ้งเตือน</small></Link>
             <Link className="header-shortcut" href={user ? "/account" : "/auth/sign-in?next=/account"}><span aria-hidden="true">○</span><small>บัญชี</small></Link>
+            {isAdmin && <Link className="header-shortcut admin-entry-shortcut" href="/admin"><span aria-hidden="true">⚙</span><small>แอดมิน</small></Link>}
           </div>
         </div>
         <nav className="market-nav" aria-label="เมนูหลัก">
