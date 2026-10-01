@@ -90,14 +90,14 @@ export default async function SellerDashboard({
             .select(sellerAuctionSelection)
             .eq("seller_id", userId)
             .order("updated_at", { ascending: false })
-            .limit(50);
+            .limit(100);
           if (!current.error) return current;
           return supabase
             .from("auctions")
             .select(legacySellerAuctionSelection)
             .eq("seller_id", userId)
             .order("updated_at", { ascending: false })
-            .limit(50);
+            .limit(100);
         })(),
         supabase
           .from("seller_profiles")

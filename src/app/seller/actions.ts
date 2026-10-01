@@ -4,12 +4,27 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { bidIncrementFor } from "@/lib/auctions/pricing";
+import referenceAuctionImport from "@/data/reference-auction-import.json";
 
 export type CreateAuctionState = {
   error?: string;
   success?: string;
   warning?: string;
   auctionId?: string;
+};
+
+export type ReferenceCatalogDraft = {
+  sourceId: string;
+  auctionId: string;
+  imageUrl: string;
+  existed: boolean;
+};
+
+export type ReferenceCatalogBatchResult = {
+  error?: string;
+  drafts: ReferenceCatalogDraft[];
+  nextOffset: number;
+  total: number;
 };
 
 const categories = new Set([
@@ -44,6 +59,79 @@ function publicError(message: string) {
   if (message.includes("SELLER_APPROVAL_REQUIRED")) return "บัญชีผู้ขายยังไม่ผ่านการอนุมัติ";
   if (message.includes("PRODUCT_TRUST_FIELDS_REQUIRED")) return "กรุณากรอกปี รุ่น ขนาด สภาพ และหมายเหตุจากผู้เชี่ยวชาญให้ครบ";
   return "บันทึกรายการไม่สำเร็จ กรุณาตรวจข้อมูลแล้วลองใหม่";
+}
+
+function referenceCatalogMarker(sourceId: string) {
+  return `[REFERENCE-CATALOG:${sourceId}]`;
+}
+
+export async function createReferenceCatalogDraftBatch(
+  offset: number,
+): Promise<ReferenceCatalogBatchResult> {
+  const total = referenceAuctionImport.length;
+  const safeOffset = Number.isInteger(offset) ? Math.max(0, Math.min(offset, total)) : 0;
+  const batch = referenceAuctionImport.slice(safeOffset, safeOffset + 6);
+  if (batch.length === 0) return { drafts: [], nextOffset: total, total };
+
+  const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return { error: "กรุณาเข้าสู่ระบบใหม่", drafts: [], nextOffset: safeOffset, total };
+  }
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from("auctions")
+    .select("id,description")
+    .eq("seller_id", userData.user.id)
+    .in("status", ["draft", "rejected", "pending_review"])
+    .limit(500);
+  if (existingError) {
+    console.error("Unable to inspect reference catalog drafts", { code: existingError.code });
+    return { error: "ตรวจรายการเดิมไม่สำเร็จ กรุณาลองใหม่", drafts: [], nextOffset: safeOffset, total };
+  }
+
+  const drafts: ReferenceCatalogDraft[] = [];
+  const startsAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const endsAt = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString();
+
+  for (const item of batch) {
+    const marker = referenceCatalogMarker(item.sourceId);
+    const existing = existingRows?.find((row) => row.description?.includes(marker));
+    if (existing) {
+      drafts.push({ sourceId: item.sourceId, auctionId: existing.id, imageUrl: item.referenceImageUrl, existed: true });
+      continue;
+    }
+
+    const openingPrice = Math.round(item.openingPrice * 100);
+    const { data, error } = await supabase.rpc("create_auction_draft_with_details", {
+      p_title: item.title,
+      p_description: item.description,
+      p_category: item.category,
+      p_opening_price: openingPrice,
+      p_min_increment: bidIncrementFor(openingPrice),
+      p_starts_at: startsAt,
+      p_ends_at: endsAt,
+      p_item_year: item.itemYear,
+      p_item_model: item.itemModel,
+      p_item_size: item.itemSize,
+      p_condition_summary: item.conditionSummary,
+      p_expert_notes: item.expertNotes,
+    });
+    const row = (Array.isArray(data) ? data[0] : data) as { id?: string } | null;
+    if (error || !row?.id) {
+      console.error("Unable to create reference catalog draft", { sourceId: item.sourceId, code: error?.code });
+      return {
+        error: `สร้างฉบับร่างได้ ${drafts.length}/${batch.length} รายการในชุดนี้ กรุณากดทำต่ออีกครั้ง`,
+        drafts,
+        nextOffset: safeOffset,
+        total,
+      };
+    }
+    drafts.push({ sourceId: item.sourceId, auctionId: row.id, imageUrl: item.referenceImageUrl, existed: false });
+  }
+
+  revalidatePath("/seller");
+  return { drafts, nextOffset: safeOffset + batch.length, total };
 }
 
 function productTrustFields(formData: FormData) {
