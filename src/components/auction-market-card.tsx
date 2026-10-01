@@ -21,7 +21,7 @@ export function AuctionMarketCard({ lot }: { lot: AuctionView }) {
           {lot.primaryImageUrl && <span className="image-watermark lot-image-watermark">BBK AUCTION</span>}
           {completed && <span className="lot-time completed">{resultLabel}</span>}
         </div>
-        {!completed && <div aria-label="เวลาประมูลคงเหลือ" className="lot-countdown-bar"><span>เหลือเวลา</span><strong><AuctionCountdown endsAt={lot.endsAt} /></strong></div>}
+        {!completed && <div aria-label="เวลาประมูลคงเหลือ" className="lot-countdown-bar"><strong><AuctionCountdown endsAt={lot.endsAt} /></strong></div>}
         <div className="lot-body">
           <span className="lot-category">{lot.category}</span>
           <h3>{lot.title}</h3>
