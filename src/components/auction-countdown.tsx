@@ -5,10 +5,13 @@ import { useDatabaseClock } from "@/components/database-clock-provider";
 
 function remaining(endsAt: string, databaseNow: number) {
   const seconds = Math.max(0, Math.ceil((new Date(endsAt).getTime() - databaseNow) / 1000));
-  const hours = Math.floor(seconds / 3600);
+  const days = Math.floor(seconds / 86_400);
+  const hours = Math.floor((seconds % 86_400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  return seconds === 0 ? "ปิดรับประมูล" : [hours, minutes, secs].map((part) => String(part).padStart(2, "0")).join(":");
+  if (seconds === 0) return "ปิดรับประมูล";
+  if (days > 0) return `${days} วัน ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  return [hours, minutes, secs].map((part) => String(part).padStart(2, "0")).join(":");
 }
 
 export function AuctionCountdown({ endsAt }: { endsAt: string }) {
