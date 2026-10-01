@@ -36,6 +36,7 @@ export function CustomerSiteHeader({
         </div>
         <nav aria-label="เมนูร้านค้า" className="customer-shop-nav">
           <Link className="active" href="/#live-lots">สินค้าประมูล</Link>
+          <Link href="/completed">ประมูลจบแล้ว</Link>
           <Link href={signedIn ? "/account#interests" : "/auth/sign-in?next=/account"}>รายการติดตาม</Link>
           <Link href={signedIn ? "/account#bidding" : "/auth/sign-in?next=/account"}>ประมูลของฉัน</Link>
           <Link href={accountHref}>บัญชีของฉัน</Link>

@@ -253,7 +253,7 @@ export async function getCompletedAuctions(filters: MarketplaceAuctionFilters = 
   const to = from + normalized.pageSize - 1;
 
   if (!isSupabaseConfigured()) {
-    return { auctions: [] as AuctionView[], total: 0, page: normalized.page, totalPages: 0 };
+    return { auctions: [] as AuctionView[], total: 0, page: normalized.page, totalPages: 0, query: normalized.query, category: normalized.category };
   }
 
   const supabase = await reconcileAuctionLifecycle();
@@ -269,7 +269,7 @@ export async function getCompletedAuctions(filters: MarketplaceAuctionFilters = 
   if (!current.error) {
     const auctions = await attachPrimaryImages(supabase, (current.data ?? []).map((row) => mapAuction(row)));
     const total = current.count ?? 0;
-    return { auctions, total, page: normalized.page, totalPages: Math.ceil(total / normalized.pageSize) };
+    return { auctions, total, page: normalized.page, totalPages: Math.ceil(total / normalized.pageSize), query: normalized.query, category: normalized.category };
   }
 
   let legacyRequest = supabase
@@ -282,11 +282,11 @@ export async function getCompletedAuctions(filters: MarketplaceAuctionFilters = 
   const legacy = await legacyRequest.range(from, to);
   if (legacy.error) {
     console.error("Unable to load completed auctions", { code: legacy.error.code });
-    return { auctions: [] as AuctionView[], total: 0, page: normalized.page, totalPages: 0 };
+    return { auctions: [] as AuctionView[], total: 0, page: normalized.page, totalPages: 0, query: normalized.query, category: normalized.category };
   }
   const total = legacy.count ?? 0;
   const auctions = await attachPrimaryImages(supabase, (legacy.data ?? []).map((row) => mapAuction(row)));
-  return { auctions, total, page: normalized.page, totalPages: Math.ceil(total / normalized.pageSize) };
+  return { auctions, total, page: normalized.page, totalPages: Math.ceil(total / normalized.pageSize), query: normalized.query, category: normalized.category };
 }
 
 export async function getAuctionById(id: string) {

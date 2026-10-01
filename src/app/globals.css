@@ -100,7 +100,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .content-section, .how-section { margin: auto; max-width: 1400px; padding: 82px clamp(24px, 6vw, 88px); }
 .section-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 34px; }
-.section-heading h2 { font-family: Georgia, serif; font-size: 34px; font-weight: 450; letter-spacing: -.03em; margin: 7px 0 0; }
+.section-heading h1, .section-heading h2 { font-family: Georgia, serif; font-size: 34px; font-weight: 450; letter-spacing: -.03em; margin: 7px 0 0; }
 .section-heading > a { border-bottom: 1px solid #b1aa9b; font-size: 12px; font-weight: 650; padding-bottom: 5px; }
 .section-heading.center { justify-content: center; text-align: center; }
 .auction-filter-bar { align-items: stretch; background: #ece8de; border: 1px solid #d9d3c6; display: grid; gap: 10px; grid-template-columns: minmax(240px, 1fr) minmax(180px, 240px) auto; margin-bottom: 14px; padding: 12px; }
@@ -1529,7 +1529,7 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .market-page .category-strip a:hover, .market-page .category-strip a.active { background: var(--market-orange-soft); border-color: var(--market-orange-line); color: var(--market-orange-dark); }
 .market-page .content-section { max-width: 1440px; padding: 42px 24px 72px; }
 .market-page .section-label { color: var(--market-orange-dark); }
-.market-page .section-heading h2 { color: #292524; font-size: 30px; font-weight: 750; }
+.market-page .section-heading h1, .market-page .section-heading h2 { color: #292524; font-size: 30px; font-weight: 750; }
 .market-page .auction-filter-bar { background: white; border-color: #e7e5e4; border-radius: 10px; }
 .market-page .auction-filter-bar input, .market-page .auction-filter-bar select { border-color: #e7e5e4; border-radius: 7px; }
 .market-page .auction-filter-bar input:focus, .market-page .auction-filter-bar select:focus { border-color: #fb923c; box-shadow: 0 0 0 3px rgba(234,88,12,.1); }
@@ -1623,7 +1623,7 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   .market-page .category-strip a.active > span { color: white; }
   .market-page .content-section { padding: 18px 14px 58px; }
   .market-page .section-heading { margin-bottom: 12px; }
-  .market-page .section-heading h2 { font-size: 24px; }
+  .market-page .section-heading h1, .market-page .section-heading h2 { font-size: 24px; }
   .market-page .auction-filter-bar { display: none; }
   .market-page .auction-result-summary { font-size: 12px; }
   .market-page .lot-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
