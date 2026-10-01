@@ -27,6 +27,18 @@ export type ReferenceCatalogBatchResult = {
   total: number;
 };
 
+export type ReferenceTestBatchResult = {
+  error?: string;
+  drafts: ReferenceCatalogDraft[];
+  nextOffset: number;
+  total: number;
+};
+
+export type ReferenceTestPublishResult = {
+  error?: string;
+  published: number;
+};
+
 const categories = new Set([
   "เหรียญกษาปณ์",
   "ธนบัตร",
@@ -132,6 +144,112 @@ export async function createReferenceCatalogDraftBatch(
 
   revalidatePath("/seller");
   return { drafts, nextOffset: safeOffset + batch.length, total };
+}
+
+export async function prepareReferenceTestDraftBatch(
+  offset: number,
+): Promise<ReferenceTestBatchResult> {
+  const total = referenceAuctionImport.length;
+  const safeOffset = Number.isInteger(offset) ? Math.max(0, Math.min(offset, total)) : 0;
+  const batch = referenceAuctionImport.slice(safeOffset, safeOffset + 6);
+  if (batch.length === 0) return { drafts: [], nextOffset: total, total };
+
+  const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return { error: "กรุณาเข้าสู่ระบบใหม่", drafts: [], nextOffset: safeOffset, total };
+  }
+  const { data: rows, error: rowsError } = await supabase
+    .from("auctions")
+    .select("id,description,status")
+    .eq("seller_id", userData.user.id)
+    .in("status", ["draft", "rejected"])
+    .limit(500);
+  if (rowsError) {
+    console.error("Unable to load reference test drafts", { code: rowsError.code });
+    return { error: "โหลดรายการทดสอบไม่สำเร็จ", drafts: [], nextOffset: safeOffset, total };
+  }
+
+  const startsAt = new Date(Date.now() - 60 * 1000).toISOString();
+  const endsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const drafts: ReferenceCatalogDraft[] = [];
+  for (const item of batch) {
+    const marker = referenceCatalogMarker(item.sourceId);
+    const row = rows?.find((candidate) => candidate.description?.includes(marker));
+    if (!row) {
+      return {
+        error: `ไม่พบฉบับร่าง ${item.sourceId} หรือรายการไม่ได้อยู่ในสถานะที่เปิดทดสอบได้`,
+        drafts,
+        nextOffset: safeOffset,
+        total,
+      };
+    }
+    const testTitle = `TEST — ไม่ขายจริง · ${item.title}`.slice(0, 160);
+    const testDescription = `TEST — รายการจำลองเพื่อทดสอบระบบเท่านั้น ไม่มีการขายหรือรับชำระเงินจริง\n\n${item.description}`.slice(0, 5000);
+    const openingPrice = Math.round(item.openingPrice * 100);
+    const { error } = await supabase.rpc("update_auction_draft_with_details", {
+      p_auction_id: row.id,
+      p_title: testTitle,
+      p_description: testDescription,
+      p_category: item.category,
+      p_opening_price: openingPrice,
+      p_min_increment: bidIncrementFor(openingPrice),
+      p_starts_at: startsAt,
+      p_ends_at: endsAt,
+      p_item_year: item.itemYear,
+      p_item_model: item.itemModel,
+      p_item_size: item.itemSize,
+      p_condition_summary: "TEST — ใช้ภาพอ้างอิงเท่านั้น ไม่ใช่สภาพสินค้าจริง",
+      p_expert_notes: "TEST — ยังไม่ได้ตรวจสินค้าจริง ห้ามใช้เพื่อฟันธงความแท้ สภาพ หรือราคา",
+    });
+    if (error) {
+      console.error("Unable to prepare reference test draft", { sourceId: item.sourceId, code: error.code });
+      return { error: "เตรียมรายการทดสอบไม่สำเร็จ กรุณาลองใหม่", drafts, nextOffset: safeOffset, total };
+    }
+    drafts.push({ sourceId: item.sourceId, auctionId: row.id, imageUrl: item.referenceImageUrl, existed: true });
+  }
+  return { drafts, nextOffset: safeOffset + batch.length, total };
+}
+
+export async function publishReferenceTestBatch(auctionIds: string[]): Promise<ReferenceTestPublishResult> {
+  if (!Array.isArray(auctionIds) || auctionIds.length < 1 || auctionIds.length > 6 || auctionIds.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) {
+    return { error: "ชุดรายการทดสอบไม่ถูกต้อง", published: 0 };
+  }
+  const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return { error: "กรุณาเข้าสู่ระบบใหม่", published: 0 };
+  const { data: rows, error: rowsError } = await supabase
+    .from("auctions")
+    .select("id,title,description,status")
+    .eq("seller_id", userData.user.id)
+    .in("id", auctionIds);
+  if (rowsError || rows?.length !== auctionIds.length) return { error: "ตรวจสิทธิ์รายการทดสอบไม่สำเร็จ", published: 0 };
+
+  const trustedSourceIds = new Set(referenceAuctionImport.map((item) => item.sourceId));
+  let published = 0;
+  for (const row of rows) {
+    const marker = row.description?.match(/\[REFERENCE-CATALOG:([^\]]+)\]/)?.[1];
+    if (!row.title.startsWith("TEST — ไม่ขายจริง") || !marker || !trustedSourceIds.has(marker)) {
+      return { error: "พบรายการที่ไม่ใช่ชุด TEST ที่อนุญาต จึงหยุดเปิดรายการ", published };
+    }
+    if (row.status === "draft" || row.status === "rejected") {
+      const { error } = await supabase.rpc("submit_auction_for_review", { p_auction_id: row.id });
+      if (error) return { error: "ส่งรายการ TEST เพื่อตรวจไม่สำเร็จ", published };
+    }
+    const { error } = await supabase.rpc("review_auction", {
+      p_auction_id: row.id,
+      p_decision: "approve",
+      p_reason: "เปิดรายการ TEST จากภาพอ้างอิงเพื่อทดสอบหน้าตลาด ไม่มีการขายจริง",
+    });
+    if (error) {
+      console.error("Unable to publish reference test auction", { auctionId: row.id, code: error.code });
+      return { error: "เปิดรายการ TEST ไม่สำเร็จ กรุณาตรวจรูปและสถานะ", published };
+    }
+    published += 1;
+  }
+  revalidatePath("/");
+  revalidatePath("/seller");
+  return { published };
 }
 
 function productTrustFields(formData: FormData) {

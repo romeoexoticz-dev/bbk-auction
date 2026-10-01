@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createReferenceCatalogDraftBatch, type ReferenceCatalogDraft } from "@/app/seller/actions";
+import {
+  createReferenceCatalogDraftBatch,
+  prepareReferenceTestDraftBatch,
+  publishReferenceTestBatch,
+  type ReferenceCatalogDraft,
+} from "@/app/seller/actions";
 import { createClient } from "@/lib/supabase/client";
 
 const imageSize = 800;
 
-async function referenceImageFile(url: string, sourceId: string) {
+async function referenceImageFile(url: string, sourceId: string, testWatermark = false) {
   const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) throw new Error("REFERENCE_IMAGE_UNAVAILABLE");
   const blob = await response.blob();
@@ -30,11 +35,60 @@ async function referenceImageFile(url: string, sourceId: string) {
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
     context.drawImage(image, Math.round((imageSize - width) / 2), Math.round((imageSize - height) / 2), width, height);
+    if (testWatermark) {
+      context.fillStyle = "rgba(190, 28, 28, 0.94)";
+      context.fillRect(0, 0, imageSize, 118);
+      context.fillRect(0, imageSize - 92, imageSize, 92);
+      context.fillStyle = "#ffffff";
+      context.textAlign = "center";
+      context.font = "bold 48px sans-serif";
+      context.fillText("TEST — ไม่ขายจริง", imageSize / 2, 72);
+      context.font = "bold 30px sans-serif";
+      context.fillText("ภาพอ้างอิงเท่านั้น", imageSize / 2, imageSize - 34);
+    }
     const output = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
     if (!output) throw new Error("WEBP_CONVERSION_FAILED");
     return new File([output], `${sourceId}.webp`, { type: "image/webp" });
   } finally {
     URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function attachTestImages(draft: ReferenceCatalogDraft, userId: string) {
+  const supabase = createClient();
+  const { data: existing, error: inspectError } = await supabase
+    .from("auction_media")
+    .select("media_kind")
+    .eq("auction_id", draft.auctionId)
+    .in("media_kind", ["front", "back", "defect"]);
+  if (inspectError) throw inspectError;
+  const existingKinds = new Set((existing ?? []).map((row) => row.media_kind));
+  const missing = (["front", "back", "defect"] as const).filter((kind) => !existingKinds.has(kind));
+  if (missing.length === 0) return;
+  const file = await referenceImageFile(draft.imageUrl, draft.sourceId, true);
+  const position: Record<(typeof missing)[number], number> = { front: 0, back: 1, defect: 2 };
+  const checksum = await checksumSha256(file);
+  for (const kind of missing) {
+    const objectPath = `${userId}/${draft.auctionId}/${crypto.randomUUID()}.webp`;
+    const { error: uploadError } = await supabase.storage.from("auction-media").upload(objectPath, file, {
+      contentType: file.type,
+      upsert: false,
+    });
+    if (uploadError) throw uploadError;
+    const { error: metadataError } = await supabase.from("auction_media").insert({
+      auction_id: draft.auctionId,
+      owner_id: userId,
+      object_path: objectPath,
+      media_kind: kind,
+      position: position[kind],
+      mime_type: file.type,
+      byte_size: file.size,
+      checksum_sha256: checksum,
+    });
+    if (metadataError) {
+      await supabase.storage.from("auction-media").remove([objectPath]);
+      throw metadataError;
+    }
   }
 }
 
@@ -83,6 +137,10 @@ export function ReferenceCatalogImporter() {
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [testRunning, setTestRunning] = useState(false);
+  const [testProgress, setTestProgress] = useState(0);
+  const [testMessage, setTestMessage] = useState("");
+  const [testError, setTestError] = useState("");
 
   async function runImport() {
     setRunning(true);
@@ -120,6 +178,44 @@ export function ReferenceCatalogImporter() {
     }
   }
 
+  async function openTestAuctions() {
+    setTestRunning(true);
+    setTestError("");
+    setTestMessage("กำลังเตรียมรายการ TEST...");
+    const supabase = createClient();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      setTestError("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+      setTestRunning(false);
+      return;
+    }
+    let offset = 0;
+    let completed = 0;
+    try {
+      while (true) {
+        const prepared = await prepareReferenceTestDraftBatch(offset);
+        if (prepared.error) throw new Error(prepared.error);
+        for (const draft of prepared.drafts) {
+          setTestMessage(`กำลังทำภาพ TEST ${completed + 1}/${prepared.total}...`);
+          await attachTestImages(draft, userData.user.id);
+        }
+        const published = await publishReferenceTestBatch(prepared.drafts.map((draft) => draft.auctionId));
+        if (published.error) throw new Error(published.error);
+        completed += published.published;
+        setTestProgress(completed);
+        offset = prepared.nextOffset;
+        if (offset >= prepared.total) break;
+      }
+      setTestMessage("เปิดรายการ TEST ครบ 60 รายการแล้ว · ปิดใน 7 วัน · ระบบเงินจริงยังปิด");
+      router.refresh();
+    } catch (caught) {
+      console.error("Unable to open reference test auctions", caught);
+      setTestError(caught instanceof Error ? caught.message : "เปิดรายการ TEST ไม่สำเร็จ");
+    } finally {
+      setTestRunning(false);
+    }
+  }
+
   return (
     <section className="panel seller-create-panel">
       <div className="panel-heading">
@@ -137,6 +233,17 @@ export function ReferenceCatalogImporter() {
       <div className="seller-form-actions">
         <p>รายการจะไม่แสดงในตลาดจนกว่าแอดมินตรวจภาพจริงและกดเปิดประมูล</p>
         <button className="button button-gold" disabled={running} onClick={runImport} type="button">{running ? "กำลังนำเข้า..." : progress > 0 ? "ทำต่อ / ตรวจซ้ำ" : "เริ่มนำเข้า 60 รายการ"}</button>
+      </div>
+      <div className="notice-card">
+        <span>T</span>
+        <div><strong>เปิดโหมดทดสอบหน้าตลาด</strong><p>ทั้ง 60 รายการจะติดคำว่า TEST — ไม่ขายจริง มีลายน้ำแดงบนภาพ ปิดใน 7 วัน และไม่มีการรับชำระเงินจริง</p></div>
+      </div>
+      {testProgress > 0 && <p className="seller-form-success" role="status"><strong>เปิดรายการ TEST แล้ว {testProgress}/60 รายการ</strong></p>}
+      {testMessage && <p className="seller-form-success" role="status"><strong>{testMessage}</strong></p>}
+      {testError && <p className="form-error" role="alert">{testError}</p>}
+      <div className="seller-form-actions">
+        <p>ใช้เพื่อทดสอบจำนวนรายการและหน้ามือถือเท่านั้น ต้องล้างชุด TEST ก่อนเปิดขายจริง</p>
+        <button className="button button-gold" disabled={testRunning || running} onClick={openTestAuctions} type="button">{testRunning ? "กำลังเปิด TEST..." : "เปิด 60 รายการ TEST"}</button>
       </div>
     </section>
   );
