@@ -6,9 +6,15 @@ export type RealtimeChangeEvent = {
   type: string;
   table: string;
   schema: string;
-  record: Record<string, unknown> | null;
-  old_record: Record<string, unknown> | null;
+  record?: Record<string, unknown> | null;
+  old_record?: Record<string, unknown> | null;
+  new?: Record<string, unknown> | null;
+  old?: Record<string, unknown> | null;
 };
+
+export function realtimeNewRecord(event: RealtimeChangeEvent) {
+  return event.record ?? event.new ?? null;
+}
 
 export type RealtimeSubscriptionStatus =
   | "SUBSCRIBED"

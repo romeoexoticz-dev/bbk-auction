@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { disablePushSubscriptionAction, markAllNotificationsReadAction, markNotificationReadAction, savePushSubscriptionAction } from "@/app/(customer)/notifications/actions";
 import {
+  realtimeNewRecord,
   subscribeToNotifications,
   type RealtimeChangeEvent,
   type RealtimeSubscriptionStatus,
@@ -129,8 +130,9 @@ export function MobileNotificationCenter({ userId, initialNotifications, pushDis
     };
 
     const handleCommittedChange = (event: RealtimeChangeEvent) => {
-      if (isNotification(event.record)) {
-        const incoming = event.record as MobileNotification;
+      const record = realtimeNewRecord(event);
+      if (isNotification(record)) {
+        const incoming = record as MobileNotification;
         setItems((current) => {
           const withoutIncoming = current.filter((item) => item.id !== incoming.id);
           return [incoming, ...withoutIncoming].slice(0, 30);
