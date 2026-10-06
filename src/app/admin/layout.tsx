@@ -12,6 +12,8 @@ const nav = [
   { label: "จัดการรายการประมูล", href: "/seller" },
   { label: "ตรวจและแก้รายการ", href: "/admin/auctions" },
   { label: "อนุมัติผู้ประมูล", href: "/admin/members" },
+  { label: "คะแนนผู้ประมูล", href: "/admin/reputation" },
+  { label: "จัดประมูลเป็นรอบ", href: "/admin/rounds" },
   { label: "ความสนใจลูกค้า", href: "/admin/interests" },
   { label: "ตรวจการชำระ", href: "/admin/payments" },
   { label: "กำหนดค่าจัดส่ง", href: "/admin/shipping" },

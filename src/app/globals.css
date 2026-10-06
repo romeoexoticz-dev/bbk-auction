@@ -485,6 +485,38 @@ td { border-top: 1px solid #efebe3; color: #59564f; font-size: 10px; padding: 13
 .admin-review-form input:focus, .admin-review-form textarea:focus { border-color: var(--accent); }
 .admin-review-form > div { display: flex; gap: 9px; justify-content: flex-end; margin-top: 11px; }
 .admin-review-form .button { min-height: 35px; }
+.admin-inline-search { align-items: center; display: flex; gap: 8px; }
+.admin-inline-search input { background: #fbfaf7; border: 1px solid #d7d2c7; min-height: 38px; padding: 8px 11px; }
+.reputation-pill { background: #eeece7; color: #68645d; display: inline-flex; font-size: 9px; font-weight: 750; padding: 6px 9px; }
+.reputation-pill.good { background: #e5f1eb; color: #31705a; }
+.reputation-pill.warning { background: #fff0cc; color: #8c651f; }
+.reputation-pill.needs_review, .reputation-pill.suspended { background: #f4e5e1; color: #914f43; }
+.round-form { display: grid; gap: 15px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 20px; }
+.round-form label { color: #605c54; display: flex; flex-direction: column; font-size: 11px; font-weight: 700; gap: 8px; }
+.round-form input, .round-form select, .round-form textarea { background: #fbfaf7; border: 1px solid #d7d2c7; font: inherit; padding: 12px; }
+.round-form .wide { grid-column: 1 / -1; }
+.round-form-actions { display: flex; justify-content: flex-end; }
+.round-summary { border-bottom: 1px solid #ebe7de; display: grid; grid-template-columns: repeat(3, 1fr); }
+.round-summary > span { border-right: 1px solid #ebe7de; display: flex; flex-direction: column; gap: 6px; padding: 16px 20px; }
+.round-summary > span:last-child { border-right: 0; }
+.round-summary small { color: #918d85; font-size: 9px; }
+.round-summary strong { font-size: 12px; }
+.round-lot-list { list-style: none; margin: 0; max-height: 330px; overflow: auto; padding: 0; }
+.round-lot-list li { align-items: center; border-bottom: 1px solid #efebe3; display: grid; gap: 12px; grid-template-columns: 70px minmax(0, 1fr) auto; padding: 12px 20px; }
+.round-lot-list li > span { color: var(--accent); font-size: 9px; font-weight: 800; }
+.round-lot-list strong { font-size: 11px; }
+.round-lot-list small { color: #8a867e; font-size: 9px; }
+.round-assignment-form { border-top: 1px solid #e7e1d6; padding: 20px; }
+.round-assignment-form h3 { font-family: Georgia, serif; margin: 0; }
+.round-assignment-form > p { color: #817c73; font-size: 10px; }
+.round-checkbox-grid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 16px 0; max-height: 420px; overflow: auto; }
+.round-checkbox-grid label { align-items: center; background: #faf9f6; border: 1px solid #e2ded4; cursor: pointer; display: flex; gap: 10px; padding: 11px; }
+.round-checkbox-grid input { flex: 0 0 auto; }
+.round-checkbox-grid span { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.round-checkbox-grid strong { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.round-checkbox-grid small { color: #8a867e; font-size: 8px; }
+.round-publish-form { margin: 20px; }
+.round-confirm { align-items: center !important; flex-direction: row !important; margin-top: 12px; }
 .admin-management-grid { display: grid; gap: 18px; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr); padding: 18px; }
 .admin-grant-form { display: flex; flex-direction: column; gap: 12px; }
 .admin-grant-form > div { margin-top: 0; }
@@ -1065,6 +1097,11 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   .category-strip a { background: rgba(255,255,255,.82); border: 1px solid #d9cdb6; border-radius: 999px; flex: 0 0 auto; padding: 10px 15px; }
   .category-strip a:hover, .category-strip a.active { background: var(--ink); border-color: var(--ink); color: white; }
   .dashboard-intro { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .round-form, .round-checkbox-grid, .round-summary { grid-template-columns: 1fr; }
+  .round-summary > span { border-bottom: 1px solid #ebe7de; border-right: 0; }
+  .round-lot-list li { align-items: flex-start; grid-template-columns: 58px minmax(0, 1fr); }
+  .round-lot-list li small { grid-column: 2; }
+  .admin-inline-search { align-items: stretch; flex-direction: column; width: 100%; }
   .portal-topbar { padding: 0 18px; }
   .ghost-button { display: none; }
   .portal-back-button { font-size: 12px; min-height: 44px; padding: 8px 11px; }
