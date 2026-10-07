@@ -1,4 +1,4 @@
-type AuctionCategory = "เหรียญกษาปณ์" | "ธนบัตร" | "พระเครื่อง" | "การ์ดสะสม" | "ของเล่น" | "ของเก่า";
+type AuctionCategory = "เหรียญกษาปณ์" | "ธนบัตร" | "พระเครื่อง" | "การ์ดสะสม" | "ของเก่า";
 
 type ExpansionSeed = {
   sourceId: string;
@@ -85,15 +85,6 @@ const seeds: ExpansionSeed[] = [
   commonsSeed("exp_card_esther", "การ์ดภาพสะสม Esther (ภาพอ้างอิง)", "การ์ดสะสม", "https://upload.wikimedia.org/wikipedia/commons/c/c3/EstherHaham14.jpg", "EstherHaham14.jpg", "CC BY 4.0"),
   commonsSeed("exp_card_filmisar", "ชุดการ์ดภาพยนตร์ Svensk Filmindustri (ภาพอ้างอิง)", "การ์ดสะสม", "https://upload.wikimedia.org/wikipedia/commons/3/3e/Filmisar_Svensk_Filmindustri.jpg", "Filmisar Svensk Filmindustri.jpg", "Public domain"),
   commonsSeed("exp_card_harald_madsen", "การ์ดภาพ Harald Madsen (ภาพอ้างอิง)", "การ์ดสะสม", "https://upload.wikimedia.org/wikipedia/commons/e/e5/Harald_Madsen_%22Bivognen%22_%22Sl%C3%A4pvagnen%22.jpg", "Harald Madsen Bivognen Släpvagnen.jpg", "Public domain"),
-
-  ...Array.from({ length: 10 }, (_, index) => commonsSeed(
-    `exp_toy_vintage_ornament_${String(index + 1).padStart(2, "0")}`,
-    `ของเล่นและของตกแต่งวินเทจ ชุดภาพ ${String(index + 1).padStart(2, "0")} (ภาพอ้างอิง)`,
-    "ของเล่น",
-    ["e/e3/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_01.jpg", "9/9a/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_02.jpg", "d/d1/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_03.jpg", "8/89/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_04.jpg", "b/bd/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_05.jpg", "3/3e/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_06.jpg", "7/70/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_07.jpg", "c/c0/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_08.jpg", "9/91/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_09.jpg", "4/49/2023.12.09_Vintage_Christmas_Ornaments_Market_Minsk_Belarus_10.jpg"].map((path) => `https://upload.wikimedia.org/wikipedia/commons/${path}`)[index],
-    `2023.12.09 Vintage Christmas Ornaments Market Minsk Belarus ${String(index + 1).padStart(2, "0")}.jpg`,
-    "CC BY-SA 4.0",
-  )),
 
   commonsSeed("exp_antique_wall_maps_1858", "แผนที่แขวนผนังคู่ ค.ศ. 1858 (ภาพอ้างอิง)", "ของเก่า", "https://upload.wikimedia.org/wikipedia/commons/1/15/1858_Set_of_Two_Pelton_Wall_Maps%2C_Western_Hemisphere_and_Eastern_Hemisphere_-_Geographicus_-_World-pelton-1858.jpg", "1858 Set of Two Pelton Wall Maps.jpg", "Public domain"),
   commonsSeed("exp_antique_wine_glass", "แก้วไวน์ทรง Baluster ฝรั่งเศส ศตวรรษที่ 18 (ภาพอ้างอิง)", "ของเก่า", "https://upload.wikimedia.org/wikipedia/commons/f/f4/18th_Century_French_Baluster_wine_glass.jpg", "18th Century French Baluster wine glass.jpg", "CC BY-SA 4.0"),

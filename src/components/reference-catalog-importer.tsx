@@ -168,7 +168,7 @@ export function ReferenceCatalogImporter() {
         offset = result.nextOffset;
         if (offset >= result.total) break;
       }
-      setMessage("สร้างฉบับร่างใหม่ 60 รายการและแนบภาพอ้างอิงครบแล้ว — ยังไม่แสดงต่อลูกค้า");
+      setMessage("สร้างฉบับร่างใหม่ 50 รายการและแนบภาพอ้างอิงครบแล้ว — ยังไม่แสดงต่อลูกค้า");
       router.refresh();
     } catch (caught) {
       console.error("Reference catalog import failed", caught);
@@ -206,7 +206,7 @@ export function ReferenceCatalogImporter() {
         offset = prepared.nextOffset;
         if (offset >= prepared.total) break;
       }
-      setTestMessage("เปิดรายการ TEST ครบ 60 รายการแล้ว · กระจายเวลาปิด 3 / 5 / 7 / 15 วัน · ระบบเงินจริงยังปิด");
+      setTestMessage("เปิดรายการ TEST ครบ 50 รายการแล้ว · กระจายเวลาปิด 3 / 5 / 7 / 15 วัน · ระบบเงินจริงยังปิด");
       router.refresh();
     } catch (caught) {
       console.error("Unable to open reference test auctions", caught);
@@ -219,7 +219,7 @@ export function ReferenceCatalogImporter() {
   return (
     <section className="panel seller-create-panel">
       <div className="panel-heading">
-        <div><h2>เพิ่มรายการทดสอบหมวดละ 10 รายการ</h2><p>รวม 60 รายการใหม่ แยก 6 หมวด และเก็บเป็นฉบับร่างก่อนเปิด</p></div>
+        <div><h2>เพิ่มรายการทดสอบหมวดละ 10 รายการ</h2><p>รวม 50 รายการใหม่ แยก 5 หมวด และเก็บเป็นฉบับร่างก่อนเปิด</p></div>
         <span className="status-pill"><i />ภายในทีม</span>
       </div>
       <div className="notice-card">
@@ -232,18 +232,18 @@ export function ReferenceCatalogImporter() {
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="seller-form-actions">
         <p>รายการจะไม่แสดงในตลาดจนกว่าแอดมินตรวจภาพจริงและกดเปิดประมูล</p>
-        <button className="button button-gold" disabled={running} onClick={runImport} type="button">{running ? "กำลังนำเข้า..." : progress > 0 ? "ทำต่อ / ตรวจซ้ำ" : "เริ่มนำเข้า 60 รายการ"}</button>
+        <button className="button button-gold" disabled={running} onClick={runImport} type="button">{running ? "กำลังนำเข้า..." : progress > 0 ? "ทำต่อ / ตรวจซ้ำ" : "เริ่มนำเข้า 50 รายการ"}</button>
       </div>
       <div className="notice-card">
         <span>T</span>
-        <div><strong>เปิดโหมดทดสอบหน้าตลาด</strong><p>ทั้ง 60 รายการจะติดคำว่า TEST — ไม่ขายจริง มีลายน้ำแดงบนภาพ และกระจายเวลาปิด 3 / 5 / 7 / 15 วัน</p></div>
+        <div><strong>เปิดโหมดทดสอบหน้าตลาด</strong><p>ทั้ง 50 รายการจะติดคำว่า TEST — ไม่ขายจริง มีลายน้ำแดงบนภาพ และกระจายเวลาปิด 3 / 5 / 7 / 15 วัน</p></div>
       </div>
-      {testProgress > 0 && <p className="seller-form-success" role="status"><strong>เปิดรายการ TEST แล้ว {testProgress}/60 รายการ</strong></p>}
+      {testProgress > 0 && <p className="seller-form-success" role="status"><strong>เปิดรายการ TEST แล้ว {testProgress}/50 รายการ</strong></p>}
       {testMessage && <p className="seller-form-success" role="status"><strong>{testMessage}</strong></p>}
       {testError && <p className="form-error" role="alert">{testError}</p>}
       <div className="seller-form-actions">
         <p>ใช้เพื่อทดสอบจำนวนรายการและหน้ามือถือเท่านั้น ต้องล้างชุด TEST ก่อนเปิดขายจริง</p>
-        <button className="button button-gold" disabled={testRunning || running} onClick={openTestAuctions} type="button">{testRunning ? "กำลังเปิด TEST..." : "เปิด 60 รายการ TEST"}</button>
+        <button className="button button-gold" disabled={testRunning || running} onClick={openTestAuctions} type="button">{testRunning ? "กำลังเปิด TEST..." : "เปิด 50 รายการ TEST"}</button>
       </div>
     </section>
   );
