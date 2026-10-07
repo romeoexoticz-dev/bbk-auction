@@ -96,7 +96,6 @@ export async function createReferenceCatalogDraftBatch(
     .from("auctions")
     .select("id,description")
     .eq("seller_id", userData.user.id)
-    .in("status", ["draft", "rejected", "pending_review"])
     .limit(500);
   if (existingError) {
     console.error("Unable to inspect reference catalog drafts", { code: existingError.code });
