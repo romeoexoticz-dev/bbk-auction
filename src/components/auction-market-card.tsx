@@ -4,6 +4,7 @@ import { formatBaht, type AuctionView } from "@/lib/auctions/queries";
 
 export function AuctionMarketCard({ lot }: { lot: AuctionView }) {
   const completed = lot.status === "ended" || lot.status === "settled";
+  const statusClassName = completed ? "completed" : lot.status === "scheduled" ? "scheduled" : "live";
   const statusLabel = completed ? "ประมูลจบแล้ว" : lot.status === "scheduled" ? "เร็ว ๆ นี้" : "กำลังประมูล";
   const resultLabel = lot.bidCount === 0 ? "ไม่มีคนประมูล" : `จบที่ ${formatBaht(lot.currentPrice)}`;
 
@@ -16,7 +17,7 @@ export function AuctionMarketCard({ lot }: { lot: AuctionView }) {
           role={lot.primaryImageUrl ? "img" : undefined}
           style={lot.primaryImageUrl ? { backgroundImage: `url("${lot.primaryImageUrl}")` } : undefined}
         >
-          <span className={`live-badge${completed ? " completed" : ""}`}><i /> {statusLabel}</span>
+          <span className={`live-badge ${statusClassName}`}><i /> {statusLabel}</span>
           {!lot.primaryImageUrl && <span className="lot-icon">{lot.icon}</span>}
           {lot.primaryImageUrl && <span className="image-watermark lot-image-watermark">BBK AUCTION</span>}
           {completed && <span className="lot-time completed">{resultLabel}</span>}
