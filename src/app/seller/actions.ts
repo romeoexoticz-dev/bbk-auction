@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { bidIncrementFor } from "@/lib/auctions/pricing";
-import referenceAuctionImport from "@/data/reference-auction-import.json";
+import referenceAuctionImport from "@/data/reference-auction-expansion";
 
 export type CreateAuctionState = {
   error?: string;
@@ -44,6 +44,7 @@ const categories = new Set([
   "ธนบัตร",
   "พระเครื่อง",
   "การ์ดสะสม",
+  "ของเล่น",
   "ของเก่า",
 ]);
 
@@ -104,9 +105,9 @@ export async function createReferenceCatalogDraftBatch(
 
   const drafts: ReferenceCatalogDraft[] = [];
   const startsAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-  const endsAt = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString();
 
   for (const item of batch) {
+    const endsAt = new Date(Date.now() + (item.durationDays + 1) * 24 * 60 * 60 * 1000).toISOString();
     const marker = referenceCatalogMarker(item.sourceId);
     const existing = existingRows?.find((row) => row.description?.includes(marker));
     if (existing) {
@@ -171,9 +172,9 @@ export async function prepareReferenceTestDraftBatch(
   }
 
   const startsAt = new Date(Date.now() - 60 * 1000).toISOString();
-  const endsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const drafts: ReferenceCatalogDraft[] = [];
   for (const item of batch) {
+    const endsAt = new Date(Date.now() + item.durationDays * 24 * 60 * 60 * 1000).toISOString();
     const marker = referenceCatalogMarker(item.sourceId);
     const row = rows?.find((candidate) => candidate.description?.includes(marker));
     if (!row) {

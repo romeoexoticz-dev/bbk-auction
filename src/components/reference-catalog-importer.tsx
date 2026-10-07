@@ -168,7 +168,7 @@ export function ReferenceCatalogImporter() {
         offset = result.nextOffset;
         if (offset >= result.total) break;
       }
-      setMessage("สร้างฉบับร่าง 60 รายการและแนบภาพอ้างอิงครบแล้ว — ยังไม่แสดงต่อลูกค้า");
+      setMessage("สร้างฉบับร่างใหม่ 60 รายการและแนบภาพอ้างอิงครบแล้ว — ยังไม่แสดงต่อลูกค้า");
       router.refresh();
     } catch (caught) {
       console.error("Reference catalog import failed", caught);
@@ -206,7 +206,7 @@ export function ReferenceCatalogImporter() {
         offset = prepared.nextOffset;
         if (offset >= prepared.total) break;
       }
-      setTestMessage("เปิดรายการ TEST ครบ 60 รายการแล้ว · ปิดใน 7 วัน · ระบบเงินจริงยังปิด");
+      setTestMessage("เปิดรายการ TEST ครบ 60 รายการแล้ว · กระจายเวลาปิด 3 / 5 / 7 / 15 วัน · ระบบเงินจริงยังปิด");
       router.refresh();
     } catch (caught) {
       console.error("Unable to open reference test auctions", caught);
@@ -219,14 +219,14 @@ export function ReferenceCatalogImporter() {
   return (
     <section className="panel seller-create-panel">
       <div className="panel-heading">
-        <div><h2>นำเข้าสินค้าพี่บอล 60 รายการ</h2><p>ใช้ภาพเดิมเป็นภาพอ้างอิง และเก็บทุกรายการเป็นฉบับร่างเท่านั้น</p></div>
+        <div><h2>เพิ่มรายการทดสอบหมวดละ 10 รายการ</h2><p>รวม 60 รายการใหม่ แยก 6 หมวด และเก็บเป็นฉบับร่างก่อนเปิด</p></div>
         <span className="status-pill"><i />ภายในทีม</span>
       </div>
       <div className="notice-card">
         <span>!</span>
         <div><strong>ภาพอ้างอิงไม่ใช่ภาพยืนยันสภาพสินค้า</strong><p>ก่อนเปิดประมูล ต้องแก้ข้อมูลและเพิ่มภาพสินค้าจริงด้านหน้า ด้านหลัง และตำหนิให้ครบ ระบบจะไม่ยอมเปิดรายการที่มีเพียงภาพอ้างอิง</p></div>
       </div>
-      <p>ระบบจะสร้าง 60 ฉบับร่าง ราคาเริ่มต้น 100 บาท แปลงภาพเป็น WebP 800×800 และป้องกันการสร้างซ้ำหากกดใหม่</p>
+      <p>ระบบจะสร้างหมวดละ 10 รายการ ราคาเริ่มต้น 100 บาท แปลงภาพเป็น WebP 800×800 และป้องกันการสร้างซ้ำหากกดใหม่</p>
       {progress > 0 && <p className="seller-form-success" role="status"><strong>ดำเนินการแล้ว {progress} รายการ</strong></p>}
       {message && <p className="seller-form-success" role="status"><strong>{message}</strong></p>}
       {error && <p className="form-error" role="alert">{error}</p>}
@@ -236,7 +236,7 @@ export function ReferenceCatalogImporter() {
       </div>
       <div className="notice-card">
         <span>T</span>
-        <div><strong>เปิดโหมดทดสอบหน้าตลาด</strong><p>ทั้ง 60 รายการจะติดคำว่า TEST — ไม่ขายจริง มีลายน้ำแดงบนภาพ ปิดใน 7 วัน และไม่มีการรับชำระเงินจริง</p></div>
+        <div><strong>เปิดโหมดทดสอบหน้าตลาด</strong><p>ทั้ง 60 รายการจะติดคำว่า TEST — ไม่ขายจริง มีลายน้ำแดงบนภาพ และกระจายเวลาปิด 3 / 5 / 7 / 15 วัน</p></div>
       </div>
       {testProgress > 0 && <p className="seller-form-success" role="status"><strong>เปิดรายการ TEST แล้ว {testProgress}/60 รายการ</strong></p>}
       {testMessage && <p className="seller-form-success" role="status"><strong>{testMessage}</strong></p>}

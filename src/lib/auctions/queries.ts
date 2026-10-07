@@ -56,7 +56,7 @@ export type PublicBidHistoryEntry = {
 };
 
 const now = Date.now();
-export const auctionCategories = ["เหรียญกษาปณ์", "ธนบัตร", "พระเครื่อง", "การ์ดสะสม", "ของเก่า"] as const;
+export const auctionCategories = ["เหรียญกษาปณ์", "ธนบัตร", "พระเครื่อง", "การ์ดสะสม", "ของเล่น", "ของเก่า"] as const;
 const customerMarketplaceStatuses: AuctionView["status"][] = ["scheduled", "live"];
 const customerCompletedStatuses: AuctionView["status"][] = ["ended", "settled"];
 const customerDetailStatuses: AuctionView["status"][] = ["scheduled", "live", "ended", "settled"];
@@ -94,6 +94,7 @@ function displayForCategory(category: string) {
   if (category.includes("ธนบัตร")) return { icon: "฿", tone: "note" };
   if (category.includes("พระ")) return { icon: "◈", tone: "amulet" };
   if (category.includes("การ์ด")) return { icon: "◆", tone: "card" };
+  if (category.includes("ของเล่น")) return { icon: "★", tone: "card" };
   return { icon: "๑", tone: "coin" };
 }
 

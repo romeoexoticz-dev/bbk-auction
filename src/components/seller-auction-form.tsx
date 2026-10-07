@@ -221,7 +221,7 @@ export function SellerAuctionForm({ editAuction }: { editAuction?: EditableAucti
           <label>หมวดหมู่
             <select defaultValue={editAuction?.category ?? ""} name="category" required>
               <option disabled value="">เลือกหมวดหมู่</option>
-              <option>เหรียญกษาปณ์</option><option>ธนบัตร</option><option>พระเครื่อง</option><option>การ์ดสะสม</option><option>ของเก่า</option>
+              <option>เหรียญกษาปณ์</option><option>ธนบัตร</option><option>พระเครื่อง</option><option>การ์ดสะสม</option><option>ของเล่น</option><option>ของเก่า</option>
             </select>
           </label>
           <label>ปี / ยุค
