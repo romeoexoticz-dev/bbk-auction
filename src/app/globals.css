@@ -1586,7 +1586,7 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .market-page .lot-art { aspect-ratio: 1 / 1; background-color: #fafaf9; height: auto; }
 .market-page .lot-art::after { border-color: rgba(255,255,255,.5); border-radius: 6px; }
 .market-page .live-badge { background: var(--market-orange); color: white; }
-.market-page .live-badge.live { background: #15803d; }
+.market-page .live-badge.live { background: #00a844; }
 .market-page .lot-time { background: rgba(67,20,7,.88); }
 .market-page .live-badge.completed { background: #57534e; letter-spacing: .02em; }
 .market-page .lot-time.completed { background: rgba(41,37,36,.9); }
