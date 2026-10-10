@@ -6,7 +6,7 @@ import { PortalNav } from "@/components/portal-nav";
 type PortalShellProps = {
   eyebrow: string;
   title: string;
-  nav: { label: string; href: string; active?: boolean }[];
+  nav: { label: string; href: string; active?: boolean; group?: string }[];
   children: ReactNode;
   accent?: "seller" | "admin";
   backAction?: { label: string; href: string };
@@ -35,9 +35,13 @@ export function PortalShell({ eyebrow, title, nav, children, accent = "seller", 
           <div className="top-actions">
             {backAction && <Link className="portal-back-button" href={backAction.href}><span aria-hidden="true">←</span>{backAction.label}</Link>}
             <Link className="ghost-button" href="/">ดูหน้าตลาด</Link>
-            <button className="avatar-button" aria-label="เมนูบัญชี" type="button">ต</button>
+            <Link className="avatar-button" aria-label="บัญชีของฉัน" href="/account">ต</Link>
           </div>
         </header>
+        {accent === "admin" && <details className="portal-mobile-menu">
+          <summary>☰ เมนูแอดมิน <span>เลือกหมวดงาน</span></summary>
+          <PortalNav eyebrow={eyebrow} items={nav} />
+        </details>}
         <main className="portal-content">{children}</main>
       </div>
     </div>
