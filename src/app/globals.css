@@ -1776,3 +1776,47 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   .auth-panel { border: 0; border-radius: 16px; margin: 0 auto; max-width: 560px; padding: 28px 18px; position: relative; }
   .auth-back { left: 18px; top: 24px; }
 }
+
+/* Clearer customer bidding flow for older mobile users. */
+.market-page .lot-category { font-size: 13px; letter-spacing: .06em; }
+.market-page .lot-body h3 { font-size: 19px; line-height: 1.4; }
+.market-page .lot-body p { font-size: 14px; line-height: 1.5; }
+.market-page .lot-price small, .market-page .lot-price > span { font-size: 13px; }
+.market-page .lot-price strong { font-size: 24px; }
+.market-page .live-badge { font-size: 12px; }
+.market-page .lot-result { font-size: 14px; }
+.market-page .lot-card-cta { align-items: center; background: #ea580c; border-radius: 9px; color: #fff; display: flex; font-size: 16px; font-weight: 800; justify-content: center; line-height: 1.3; margin-top: 16px; min-height: 48px; padding: 10px 14px; text-align: center; }
+.market-page .lot-card.completed .lot-card-cta { background: #57534e; }
+.market-page .lot-card-link:focus-visible { border-radius: 10px; outline: 3px solid #9a3412; outline-offset: 3px; }
+.customer-site-shell .bid-form > label { color: #3d332b; font-size: 16px; line-height: 1.5; }
+.customer-site-shell .bid-input-row input { font-size: 18px; min-height: 52px; }
+.customer-site-shell .bid-input-row > span { font-size: 20px; }
+.customer-site-shell .bid-input-row .button { font-size: 17px; font-weight: 800; min-height: 52px; }
+.customer-site-shell .bid-form > small { color: #5f574d; font-size: 14px; line-height: 1.5; }
+.customer-site-shell .bid-total-preview small { color: #61584d; font-size: 14px; line-height: 1.4; }
+.customer-site-shell .bid-total-preview strong { font-size: 18px; }
+.customer-site-shell .bid-total-preview .total small { color: #eee8dc; }
+.customer-site-shell .bid-total-preview .total strong { font-size: 22px; }
+.customer-site-shell .bid-success, .customer-site-shell .bid-form .form-error { font-size: 15px; line-height: 1.5; }
+
+@media (max-width: 580px), (hover: none) and (pointer: coarse) and (max-device-width: 700px) {
+  .market-page .market-catalog-layout .lot-grid { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  .market-page .lot-body { padding: 18px; }
+  .market-page .lot-art { aspect-ratio: 4 / 3; }
+  .market-page .lot-category { font-size: 14px; letter-spacing: .04em; }
+  .market-page .lot-body h3 { display: block; font-size: 20px; line-height: 1.4; min-height: 0; overflow: visible; }
+  .market-page .lot-price { align-items: end; flex-direction: row; gap: 12px; }
+  .market-page .lot-price small, .market-page .lot-price > span { font-size: 14px; }
+  .market-page .lot-price strong { font-size: 27px; }
+  .market-page .live-badge { font-size: 14px; left: 12px; min-height: 34px; padding: 6px 10px; top: 12px; }
+  .market-page .lot-countdown-bar { min-height: 72px; padding: 8px 12px; }
+  .market-page .auction-countdown { min-height: 56px; }
+  .market-page .auction-countdown-part b { font-size: clamp(19px,6vw,25px); }
+  .market-page .auction-countdown-part small { font-size: 12px; }
+  .market-page .lot-result { font-size: 16px; }
+  .market-page .lot-card-cta { font-size: 18px; min-height: 54px; }
+  .customer-site-shell .auction-summary > p { font-size: 16px; line-height: 1.65; }
+  .customer-site-shell .auction-facts small, .customer-site-shell .auction-facts span { font-size: 14px; }
+  .customer-site-shell .mobile-auction-cta span { color: #4f463e; font-size: 14px; }
+  .customer-site-shell .mobile-auction-cta strong { font-size: 18px; min-height: 54px; }
+}

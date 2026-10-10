@@ -29,6 +29,7 @@ export function AuctionMarketCard({ lot }: { lot: AuctionView }) {
           <p>{lot.evidenceNote}</p>
           {completed && <div className={`lot-result${lot.bidCount === 0 ? " empty" : ""}`}>{resultLabel}</div>}
           <div className="lot-price"><div><small>{completed ? lot.bidCount === 0 ? "ราคาเริ่มต้น" : "ราคาปิด" : "ราคาปัจจุบัน"}</small><strong>{formatBaht(lot.currentPrice)}</strong></div><span>{lot.bidCount} bids</span></div>
+          <span className="lot-card-cta">{completed ? "ดูผลประมูล" : lot.status === "scheduled" ? "ดูรายละเอียด" : "ดูรายการและเสนอราคา"}</span>
         </div>
       </article>
     </Link>
