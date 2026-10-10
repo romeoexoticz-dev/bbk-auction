@@ -1581,7 +1581,7 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .market-page .auction-filter-bar input, .market-page .auction-filter-bar select { border-color: #e7e5e4; border-radius: 7px; }
 .market-page .auction-filter-bar input:focus, .market-page .auction-filter-bar select:focus { border-color: #fb923c; box-shadow: 0 0 0 3px rgba(234,88,12,.1); }
 .market-page .lot-grid { gap: 16px; }
-.market-page .lot-card { border-color: #e7e5e4; border-radius: 10px; box-shadow: none; overflow: hidden; }
+.market-page .lot-card { border-color: #e7e5e4; border-radius: 10px; box-shadow: none; overflow: hidden; position: relative; }
 .market-page .lot-card:hover { border-color: #fdba74; box-shadow: 0 8px 24px rgba(124,45,18,.08); }
 .market-page .lot-art { aspect-ratio: 1 / 1; background-color: #fafaf9; height: auto; }
 .market-page .lot-art::after { border-color: rgba(255,255,255,.5); border-radius: 6px; }
@@ -1799,22 +1799,27 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .customer-site-shell .bid-total-preview .total strong { font-size: 22px; }
 .customer-site-shell .bid-success, .customer-site-shell .bid-form .form-error { font-size: 15px; line-height: 1.5; }
 
-@media (max-width: 580px), (hover: none) and (pointer: coarse) and (max-device-width: 700px) {
-  .market-page .market-catalog-layout .lot-grid { grid-template-columns: minmax(0,1fr); gap: 18px; }
+@media (max-width: 820px) {
+  .market-page .market-catalog-layout .lot-grid { grid-template-columns: minmax(0,1fr); gap: 18px; margin-left: auto; margin-right: auto; max-width: 620px; }
+  .market-page .category-strip > a, .market-page .category-strip .category-link-group a { font-size: 16px; min-height: 50px; padding: 10px 16px; }
+  .market-page .auction-result-summary { color: #51483f; font-size: 16px; line-height: 1.4; }
+  .market-page .auction-result-summary strong { font-size: 16px; }
+  .market-page .lot-card { padding-top: 44px; }
   .market-page .lot-body { padding: 18px; }
-  .market-page .lot-art { aspect-ratio: 4 / 3; }
+  .market-page .lot-art { aspect-ratio: 16 / 9; }
   .market-page .lot-category { font-size: 14px; letter-spacing: .04em; }
   .market-page .lot-body h3 { display: block; font-size: 20px; line-height: 1.4; min-height: 0; overflow: visible; }
   .market-page .lot-price { align-items: end; flex-direction: row; gap: 12px; }
   .market-page .lot-price small, .market-page .lot-price > span { font-size: 14px; }
   .market-page .lot-price strong { font-size: 27px; }
-  .market-page .live-badge { font-size: 14px; left: 12px; min-height: 34px; padding: 6px 10px; top: 12px; }
+  .market-page .live-badge { font-size: 14px; left: 12px; min-height: 34px; padding: 6px 10px; top: 7px; }
   .market-page .lot-countdown-bar { min-height: 72px; padding: 8px 12px; }
   .market-page .auction-countdown { min-height: 56px; }
   .market-page .auction-countdown-part b { font-size: clamp(19px,6vw,25px); }
   .market-page .auction-countdown-part small { font-size: 12px; }
   .market-page .lot-result { font-size: 16px; }
   .market-page .lot-card-cta { font-size: 18px; min-height: 54px; }
+  .customer-mobile-nav a > small { font-size: 13px; }
   .customer-site-shell .auction-summary > p { font-size: 16px; line-height: 1.65; }
   .customer-site-shell .auction-facts small, .customer-site-shell .auction-facts span { font-size: 14px; }
   .customer-site-shell .mobile-auction-cta span { color: #4f463e; font-size: 14px; }

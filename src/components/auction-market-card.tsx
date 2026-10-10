@@ -11,13 +11,13 @@ export function AuctionMarketCard({ lot }: { lot: AuctionView }) {
   return (
     <Link className="lot-card-link" href={`/auctions/${lot.id}`}>
       <article className={`lot-card${completed ? " completed" : ""}`}>
+        <span className={`live-badge ${statusClassName}`}><i /> {statusLabel}</span>
         <div
           aria-label={lot.primaryImageUrl ? `รูปหน้ารายการ ${lot.title}` : undefined}
           className={`lot-art ${lot.tone}${lot.primaryImageUrl ? " has-photo" : ""}`}
           role={lot.primaryImageUrl ? "img" : undefined}
           style={lot.primaryImageUrl ? { backgroundImage: `url("${lot.primaryImageUrl}")` } : undefined}
         >
-          <span className={`live-badge ${statusClassName}`}><i /> {statusLabel}</span>
           {!lot.primaryImageUrl && <span className="lot-icon">{lot.icon}</span>}
           {lot.primaryImageUrl && <span className="image-watermark lot-image-watermark">BBK AUCTION</span>}
           {completed && <span className="lot-time completed">{resultLabel}</span>}
