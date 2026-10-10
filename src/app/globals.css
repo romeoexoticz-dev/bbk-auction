@@ -1944,3 +1944,19 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 }
 
 .market-page .senior-lot-card .live-badge.live { background: #087a37; }
+
+/* The detail timer needs the full row; four units cannot fit in half of a narrow summary. */
+.customer-site-shell .auction-facts { grid-template-columns: minmax(0, 1fr); }
+.customer-site-shell .auction-facts > div + div { border-left: 0; border-top: 1px solid #e3dfd5; padding-left: 0; }
+.customer-site-shell .auction-facts .countdown-large { margin: 8px 0; min-width: 0; width: 100%; }
+.customer-site-shell .auction-facts .countdown-large .auction-countdown { border-radius: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 0; max-width: none; min-height: 76px; width: 100%; }
+.customer-site-shell .auction-facts .countdown-large .auction-countdown-part { min-width: 0; padding: 9px 2px; }
+.customer-site-shell .auction-facts .countdown-large .auction-countdown-part b { font-size: clamp(22px, 6vw, 30px); letter-spacing: 0; }
+.customer-site-shell .auction-facts .countdown-large .auction-countdown-part small { font-size: 15px; line-height: 1.2; margin-top: 7px; }
+
+@media (max-width: 360px) {
+  .customer-site-shell .auction-facts .countdown-large .auction-countdown { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customer-site-shell .auction-facts .countdown-large .auction-countdown-part { min-height: 66px; }
+  .customer-site-shell .auction-facts .countdown-large .auction-countdown-part:nth-child(3)::before { display: none; }
+  .customer-site-shell .auction-facts .countdown-large .auction-countdown-part:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,.3); }
+}
