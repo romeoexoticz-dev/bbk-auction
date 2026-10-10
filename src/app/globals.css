@@ -1992,6 +1992,19 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
 .admin-link-grid a > span { color: #a34813; font-size: 12px; font-weight: 750; margin-top: auto; }
 .admin-more-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .admin-more-grid a { min-height: 88px; }
+.portal-shell.admin .panel { border-radius: 12px; overflow: hidden; }
+.portal-shell.admin .panel-heading { align-items: flex-start; gap: 12px; padding: 22px 24px; }
+.portal-shell.admin .panel-heading h2 { color: #28231e; font-size: 24px; }
+.portal-shell.admin .panel-heading p { color: #625d56; font-size: 14px; }
+.portal-shell.admin .admin-review-list { gap: 16px; padding: 20px; }
+.portal-shell.admin .admin-review-card { border-radius: 10px; padding: 22px; }
+.portal-shell.admin .admin-review-heading > div > span { font-size: 12px; }
+.portal-shell.admin .admin-review-heading small, .portal-shell.admin .admin-review-facts small { color: #665f57; font-size: 13px; }
+.portal-shell.admin .admin-review-facts strong { font-size: 16px; }
+.portal-shell.admin .admin-review-form { border-radius: 8px; padding: 18px; }
+.portal-shell.admin .admin-review-form label { color: #403c37; font-size: 14px; }
+.portal-shell.admin .admin-review-form input:not([type="hidden"]):not([type="checkbox"]), .portal-shell.admin .admin-review-form textarea { font-size: 15px; min-height: 44px; }
+.portal-shell.admin .admin-review-form .button { font-size: 14px; min-height: 44px; }
 
 @media (max-width: 1100px) {
   .portal-shell.admin { grid-template-columns: 232px minmax(0, 1fr); }
@@ -2017,4 +2030,11 @@ form.payment-test-control { background: #fffaf1; border: 1px solid #e6c58c; padd
   .admin-work-grid a { min-height: 88px; }
   .admin-link-grid a { min-height: 88px; }
   .portal-mobile-menu nav { grid-template-columns: minmax(0, 1fr); }
+  .portal-shell.admin .panel-heading { flex-wrap: wrap; padding: 18px; }
+  .portal-shell.admin .admin-review-list { padding: 12px; }
+  .portal-shell.admin .admin-review-card { padding: 16px; }
+  .portal-shell.admin .admin-review-heading { display: flex; flex-wrap: wrap; }
+  .portal-shell.admin .admin-review-heading > div { flex: 1 1 180px; min-width: 0; }
+  .portal-shell.admin .admin-review-form > div { flex-wrap: wrap; }
+  .portal-shell.admin .admin-review-form .button { flex: 1 1 140px; }
 }
