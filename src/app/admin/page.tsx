@@ -400,28 +400,38 @@ export async function AdminDashboardContent({
       {adminRoleGranted && <div className="seller-page-message success"><strong>เพิ่มแอดมินใหม่แล้ว</strong><p>สิทธิ์ถูกบันทึก พร้อม Audit trail และแจ้งเตือนทีมแอดมินแล้ว</p></div>}
       {adminRoleAlreadyExists && <div className="seller-page-message success"><strong>บัญชีนี้เป็นแอดมินอยู่แล้ว</strong><p>ระบบไม่เพิ่มสิทธิ์ซ้ำและไม่มีข้อมูลซ้ำในฐานข้อมูล</p></div>}
       {adminRoleError && <div className="seller-page-message error"><strong>เพิ่มแอดมินไม่สำเร็จ</strong><p>{adminRoleError === "invalid-password" ? "รหัสผ่านของแอดมินผู้ดำเนินการไม่ถูกต้อง" : adminRoleError === "rate-limited" ? "กรอกรหัสผ่านผิดครบ 5 ครั้ง กรุณารอ 15 นาทีแล้วลองใหม่" : adminRoleError === "target-ineligible" ? "ไม่พบบัญชีที่พร้อมใช้งาน กรุณาให้บัญชีนั้นสมัครและยืนยันอีเมลก่อน" : "กรุณาตรวจอีเมล รหัสผ่าน เหตุผล และลองใหม่"}</p></div>}
-      {section === "overview" && <><section className="metric-grid admin-metrics">
-        <article><span className="metric-icon">▣</span><small>รายการที่กำลัง Live</small><strong>{liveResult.count ?? 0}</strong><em>ข้อมูลจริงในฐานข้อมูล</em></article>
-        <article><span className="metric-icon">⌕</span><small>ผู้ประมูลรอตรวจ</small><strong>{bidderReviews.length}</strong><em className={bidderReviews.length > 0 ? "warn" : "good"}>{bidderReviews.length > 0 ? "มีบัญชีรอดำเนินการ" : "คิวว่าง"}</em></article>
-        <article><span className="metric-icon">♙</span><small>โหมดผู้ขาย</small><strong>BBK</strong><em>ผู้ขายรายเดียว · ปิดรับภายนอก</em></article>
-        <article><span className="metric-icon">◎</span><small>เหตุการณ์ล่าสุด</small><strong>{audits.length}</strong><em>แสดงไม่เกิน 8 เหตุการณ์</em></article>
-      </section>
-      <section className="admin-quick-grid" aria-label="งานหลักของแอดมิน">
-        <Link href="/seller#new"><span>＋</span><strong>เพิ่มรายการประมูล</strong><small>สร้าง ตรวจ และตั้งเวลาในหน้าเดียว</small></Link>
-        <Link href="/admin/members"><span>{bidderReviews.length}</span><strong>ผู้ประมูลรอตรวจ</strong><small>อนุมัติบัญชีลูกค้า</small></Link>
-        <Link href="/admin/payments"><span>{paymentReviews.length}</span><strong>หลักฐานรอตรวจ</strong><small>ตรวจยอดและสลิป</small></Link>
-        <Link href="/admin/fulfillment"><span>{fulfillmentOrders.length}</span><strong>รายการรอจัดส่ง</strong><small>เตรียมของและใส่เลขพัสดุ</small></Link>
-      </section>
-      <section className="admin-category-grid" aria-label="หมวดงานหลังบ้าน">
-        <Link href="/admin/auctions"><strong>รายการประมูล</strong><small>ตรวจและส่งกลับแก้ไข</small></Link>
-        <Link href="/admin/interests"><strong>ความสนใจลูกค้า</strong><small>วางแผนสินค้าที่ลูกค้าต้องการ</small></Link>
-        <Link href="/admin/shipping"><strong>ค่าจัดส่ง</strong><small>กำหนดยอดสุทธิก่อนรับหลักฐาน</small></Link>
-        <Link href="/admin/defaults"><strong>บัญชีไม่ชำระ</strong><small>ตรวจและคืนสิทธิ์บัญชี</small></Link>
-        <Link href="/admin/team"><strong>ทีมแอดมิน</strong><small>ดูรายชื่อและเพิ่มผู้ดูแล</small></Link>
-        <Link href="/admin/security"><strong>ความปลอดภัย</strong><small>ตรวจการกดประมูลผิดปกติ</small></Link>
-        <Link href="/admin/audit"><strong>เหตุการณ์ระบบ</strong><small>เปิดประวัติตรวจสอบย้อนหลัง</small></Link>
-        <Link href="/admin/reports"><strong>รายงาน</strong><small>ยอดประมูล การชำระ และค้างส่ง</small></Link>
-      </section></>}
+      {section === "overview" && <div className="admin-home">
+        <section aria-labelledby="admin-work-title" className="admin-home-section admin-work-section">
+          <div className="admin-home-heading"><div><span>เริ่มตรงนี้</span><h2 id="admin-work-title">งานที่ต้องทำ</h2><p>เลือกงานที่ต้องตรวจ คิวว่างไม่ต้องกดเข้าไปหา</p></div></div>
+          <div className="admin-work-grid">
+            <Link href="/admin/members"><span className="admin-work-count">{bidderReviews.length}</span><span><strong>อนุมัติผู้ประมูล</strong><small>บัญชีรอตรวจ</small></span><b aria-hidden="true">→</b></Link>
+            <Link href="/admin/payments"><span className="admin-work-count">{paymentReviews.length}</span><span><strong>ตรวจหลักฐานการชำระ</strong><small>ออเดอร์รอตรวจสลิป</small></span><b aria-hidden="true">→</b></Link>
+            <Link href="/admin/shipping"><span className="admin-work-count">{shippingOrders.length}</span><span><strong>กำหนดค่าจัดส่ง</strong><small>ออเดอร์ที่ยังไม่ส่งหลักฐาน</small></span><b aria-hidden="true">→</b></Link>
+            <Link href="/admin/fulfillment"><span className="admin-work-count">{fulfillmentOrders.length}</span><span><strong>เตรียมและจัดส่ง</strong><small>ออเดอร์รอดำเนินการ</small></span><b aria-hidden="true">→</b></Link>
+          </div>
+          <p className="admin-queue-note">ตัวเลขแสดงจำนวนในคิวที่โหลดบนหน้านี้</p>
+        </section>
+        <section aria-labelledby="admin-auction-title" className="admin-home-section">
+          <div className="admin-home-heading"><div><span>สินค้าและประมูล</span><h2 id="admin-auction-title">จัดการรายการ</h2><p>สร้างสินค้า ตรวจรายการ และจัดรอบประมูล</p></div><strong>{liveResult.count ?? 0} รายการกำลังประมูล</strong></div>
+          <div className="admin-link-grid">
+            <Link href="/seller#new"><strong>＋ เพิ่มรายการใหม่</strong><small>ลงรูปและข้อมูลสินค้า</small><span>ไปหน้านี้ →</span></Link>
+            <Link href="/admin/auctions"><strong>ตรวจและแก้รายการ</strong><small>ส่งกลับแก้ไขตามสิทธิ์</small><span>ไปหน้านี้ →</span></Link>
+            <Link href="/admin/rounds"><strong>จัดประมูลเป็นรอบ</strong><small>รวมสินค้าหลายรายการ</small><span>ไปหน้านี้ →</span></Link>
+          </div>
+        </section>
+        <section aria-labelledby="admin-more-title" className="admin-home-section">
+          <div className="admin-home-heading"><div><span>เครื่องมือเพิ่มเติม</span><h2 id="admin-more-title">ข้อมูลและตรวจสอบ</h2><p>รายงาน ความปลอดภัย และการจัดการทีม</p></div></div>
+          <div className="admin-link-grid admin-more-grid">
+            <Link href="/admin/reports"><strong>รายงานยอดและออเดอร์</strong><small>ประมูล ชำระเงิน และค้างส่ง</small></Link>
+            <Link href="/admin/reputation"><strong>คะแนนผู้ประมูล</strong><small>ตรวจพฤติกรรมการประมูล</small></Link>
+            <Link href="/admin/interests"><strong>ความสนใจลูกค้า</strong><small>ดูหมวดสินค้าที่ลูกค้าสนใจ</small></Link>
+            <Link href="/admin/defaults"><strong>บัญชีไม่ชำระ</strong><small>{paymentDefaults.length} บัญชีในคิวตรวจ</small></Link>
+            <Link href="/admin/security"><strong>การกดประมูลผิดปกติ</strong><small>ดูรายการที่ระบบปฏิเสธ</small></Link>
+            <Link href="/admin/audit"><strong>เหตุการณ์ระบบ</strong><small>ประวัติการทำงานย้อนหลัง</small></Link>
+            <Link href="/admin/team"><strong>ทีมแอดมิน</strong><small>ตรวจรายชื่อและสิทธิ์</small></Link>
+          </div>
+        </section>
+      </div>}
       {section === "interests" && <section className="panel admin-interest-panel" id="interests">
         <div className="panel-heading"><div><h2>ลูกค้าอยากประมูลอะไร</h2><p>ข้อมูลส่วนตัวสำหรับวางแผนสินค้า แสดงเฉพาะบัญชีแอดมิน</p></div><span className="table-filter">{totalInterestedCustomers} ลูกค้า</span></div>
         <div className="admin-interest-summary">

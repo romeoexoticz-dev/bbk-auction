@@ -8,21 +8,21 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "ศูนย์ควบคุมแอดมิน" };
 
 const nav = [
-  { label: "ภาพรวมระบบ", href: "/admin" },
-  { label: "จัดการรายการประมูล", href: "/seller" },
-  { label: "ตรวจและแก้รายการ", href: "/admin/auctions" },
-  { label: "อนุมัติผู้ประมูล", href: "/admin/members" },
-  { label: "คะแนนผู้ประมูล", href: "/admin/reputation" },
-  { label: "จัดประมูลเป็นรอบ", href: "/admin/rounds" },
-  { label: "ความสนใจลูกค้า", href: "/admin/interests" },
-  { label: "ตรวจการชำระ", href: "/admin/payments" },
-  { label: "กำหนดค่าจัดส่ง", href: "/admin/shipping" },
-  { label: "จัดส่งสินค้า", href: "/admin/fulfillment" },
-  { label: "ตรวจบัญชีไม่ชำระ", href: "/admin/defaults" },
-  { label: "รายงานยอดและ Order", href: "/admin/reports" },
-  { label: "ทีมแอดมิน", href: "/admin/team" },
-  { label: "ตรวจการกดประมูล", href: "/admin/security" },
-  { label: "เหตุการณ์ระบบ", href: "/admin/audit" },
+  { label: "ภาพรวมและงานรอทำ", href: "/admin", group: "เริ่มงาน" },
+  { label: "รายการประมูล", href: "/seller", group: "สินค้าและประมูล" },
+  { label: "ตรวจและแก้รายการ", href: "/admin/auctions", group: "สินค้าและประมูล" },
+  { label: "จัดประมูลเป็นรอบ", href: "/admin/rounds", group: "สินค้าและประมูล" },
+  { label: "อนุมัติผู้ประมูล", href: "/admin/members", group: "ลูกค้าและออเดอร์" },
+  { label: "ตรวจการชำระ", href: "/admin/payments", group: "ลูกค้าและออเดอร์" },
+  { label: "กำหนดค่าจัดส่ง", href: "/admin/shipping", group: "ลูกค้าและออเดอร์" },
+  { label: "จัดส่งสินค้า", href: "/admin/fulfillment", group: "ลูกค้าและออเดอร์" },
+  { label: "ตรวจบัญชีไม่ชำระ", href: "/admin/defaults", group: "ลูกค้าและออเดอร์" },
+  { label: "คะแนนผู้ประมูล", href: "/admin/reputation", group: "ข้อมูลและตรวจสอบ" },
+  { label: "ความสนใจลูกค้า", href: "/admin/interests", group: "ข้อมูลและตรวจสอบ" },
+  { label: "รายงานยอดและออเดอร์", href: "/admin/reports", group: "ข้อมูลและตรวจสอบ" },
+  { label: "ตรวจการกดประมูล", href: "/admin/security", group: "ข้อมูลและตรวจสอบ" },
+  { label: "เหตุการณ์ระบบ", href: "/admin/audit", group: "ข้อมูลและตรวจสอบ" },
+  { label: "ทีมแอดมิน", href: "/admin/team", group: "ตั้งค่าทีม" },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
