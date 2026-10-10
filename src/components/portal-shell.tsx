@@ -35,7 +35,7 @@ export function PortalShell({ eyebrow, title, nav, children, accent = "seller", 
           <div className="top-actions">
             {backAction && <Link className="portal-back-button" href={backAction.href}><span aria-hidden="true">←</span>{backAction.label}</Link>}
             <Link className="ghost-button" href="/">ดูหน้าตลาด</Link>
-            <Link className="avatar-button" aria-label="บัญชีของฉัน" href="/account">ต</Link>
+            {accent === "admin" ? <Link className="avatar-button" aria-label="บัญชีของฉัน" href="/account">ต</Link> : <button className="avatar-button" aria-label="เมนูบัญชี" type="button">ต</button>}
           </div>
         </header>
         {accent === "admin" && <details className="portal-mobile-menu">
