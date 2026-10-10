@@ -4,9 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items: { href: string; label: string; icon: string; auth?: boolean }[] = [
-  { href: "/", label: "หน้าแรก", icon: "⌂" },
-  { href: "/#live-lots", label: "ประมูล", icon: "◈" },
-  { href: "/#categories", label: "หมวดหมู่", icon: "▦" },
+  { href: "/", label: "รายการประมูล", icon: "◈" },
+  { href: "/completed", label: "จบแล้ว", icon: "✓" },
   { href: "/account#notifications", label: "แจ้งเตือน", icon: "♢", auth: true },
   { href: "/account", label: "บัญชี", icon: "○", auth: true },
 ];
@@ -21,6 +20,8 @@ export function CustomerMobileNav({ signedIn }: { signedIn: boolean }) {
         const href = item.auth && !signedIn ? "/auth/sign-in?next=/account" : item.href;
         const active = item.href === "/account"
           ? pathname === "/account"
+          : item.href === "/completed"
+            ? pathname === "/completed"
           : item.href === "/"
             ? pathname === "/"
             : false;

@@ -33,30 +33,19 @@ export default async function CompletedAuctionsPage({ searchParams }: { searchPa
   if (totalPages > 0 && page > totalPages) redirect(completedHref(query, category, totalPages));
 
   return (
-    <div className="market-page">
+    <div className="market-page senior-market">
       <main>
-        <form action="/completed" className="mobile-market-search" method="get">
-          <label><span className="sr-only">ค้นหารายการประมูลจบแล้ว</span><input defaultValue={query} maxLength={80} name="q" placeholder="ค้นหารายการประมูลจบแล้ว…" type="search" /></label>
-          <button aria-label="ค้นหา" type="submit">⌕</button>
-        </form>
+        <section className="senior-market-intro" aria-labelledby="completed-title"><div><span className="senior-market-eyebrow">รายการย้อนหลัง</span><h1 id="completed-title">ประมูลจบแล้ว</h1><p>ดูราคาปิดและรายการที่ไม่มีผู้เสนอราคา</p></div><Link className="senior-completed-link" href="/#live-lots">← กลับไปดูรายการประมูล</Link></section>
+        <form action="/completed" className="senior-search" method="get"><label htmlFor="senior-completed-search">ค้นหารายการที่จบแล้ว</label><div><input defaultValue={query} id="senior-completed-search" maxLength={80} name="q" placeholder="พิมพ์ชื่อสินค้า" type="search" /><button type="submit">ค้นหา</button></div>{category && <input name="category" type="hidden" value={category} />}</form>
 
         <div className="market-catalog-layout completed-market-layout">
-          <section aria-label="เลือกหมวดหมู่" className="category-strip" id="categories">
-            <h2><span aria-hidden="true">▱</span> หมวดหมู่สินค้า</h2>
-            <Link className={!category ? "active" : ""} href={completedHref(query, "")}><span aria-hidden="true">▦</span>ทั้งหมด</Link>
-            {auctionCategories.map((item) => <span className="category-link-group" key={item}><Link className={category === item ? "active" : ""} href={completedHref(query, item)}><span aria-hidden="true">◇</span>{item}</Link></span>)}
-          </section>
+          <details className="senior-category-picker" id="categories"><summary>หมวดสินค้า: <strong>{category || "ทั้งหมด"}</strong><span aria-hidden="true">▾</span></summary><div aria-label="เลือกหมวดหมู่" className="senior-category-options"><Link aria-current={!category ? "page" : undefined} className={!category ? "active" : ""} href={completedHref(query, "")}>ทั้งหมด</Link>{auctionCategories.map((item) => <Link aria-current={category === item ? "page" : undefined} className={category === item ? "active" : ""} href={completedHref(query, item)} key={item}>{item}</Link>)}</div></details>
 
           <section className="content-section completed-section" id="completed-lots">
             <div className="section-heading">
-              <div><span className="section-label">รายการย้อนหลัง</span><h1>ประมูลจบแล้ว</h1></div>
+              <div><h2>ผลประมูลทั้งหมด</h2></div>
               <span className="completed-count">{total.toLocaleString("th-TH")} รายการ</span>
             </div>
-            <form action="/completed" className="auction-filter-bar" method="get">
-              <label className="auction-search"><span className="sr-only">ค้นหารายการประมูลจบแล้ว</span><input defaultValue={query} maxLength={80} name="q" placeholder="ค้นหาชื่อสินค้า รุ่น หรือรายละเอียด…" type="search" /></label>
-              <label><span className="sr-only">กรองหมวดหมู่</span><select defaultValue={category} name="category"><option value="">ทุกหมวดหมู่</option>{auctionCategories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-              <button className="button button-dark" type="submit">ค้นหา</button>
-            </form>
             {auctions.length > 0 ? <div className="lot-grid completed-lot-grid">
               {auctions.map((lot) => <AuctionMarketCard key={lot.id} lot={lot} />)}
             </div> : <div className="empty-lots"><strong>{query || category ? "ไม่พบรายการที่ค้นหา" : "ยังไม่มีรายการประมูลจบแล้ว"}</strong><p>{query || category ? "ลองเปลี่ยนคำค้นหรือเลือกทุกหมวดหมู่" : "รายการที่ปิดประมูลแล้วจะปรากฏในหน้านี้"}</p>{(query || category) && <Link className="button button-outline" href="/completed">ดูรายการทั้งหมด</Link>}</div>}
